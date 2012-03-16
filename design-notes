@@ -1,0 +1,37 @@
+Design Log
+
+==============================================================================
+
+First, I read through the RC8660 data sheet from the introduction to the serial interface portion on page 10. I drew the IC diagram of the typical application circuit on page 3 and verified that I understood each line. Then I worked with the RS232 section in the text (page 273-275) summarized.
+
+8 bit packets, one start bit, one stop bit, no parity bit
+RC8660 handles up to 115200 and automatically detects. 
+
+
+The logic level conversion is handled by the MAX202 in circuit.
+
+We can connect RS232 straight through. 
+The PXA270 has four UARTS. We're using UART B on COM2 (16C554) 
+and interfacing with the RC8660 speech synthesizer chip. 
+
+UART is DTE and RC8660 is DCE.
+
+Usually the standard RS232 procedure is:
+
+DTR# -> 
+     <- DSR#
+RTS# ->
+     <- CTS#
+     <- CD#
+
+We're not using DSR# and RTS# at all.
+
+The next step is to figure out the actual handshaking procedure.
+
+In this case, the UART 16C554 will have the buffer loaded with ASCII chars when it detects an interrupt - if this was caused by the falling edge on the RC8660 CTS# line, the UART will begin to send the message to the RC8660.
+
+A message consists of a start bit, 8 bits, a stop bit, another start bit, 8 bits, another stop bit, etc. The RC8660 will leave the CTS# line low until the bits are all accepted and then pull the line high. What if the CTS# line is pulled high again during the message?  
+
+RxD and TxD are also included in the datasheet and figure 5-19 -- how are they used?
+
+==============================================================================
