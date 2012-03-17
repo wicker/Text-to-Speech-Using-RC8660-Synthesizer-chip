@@ -35,3 +35,21 @@ A message consists of a start bit, 8 bits, a stop bit, another start bit, 8 bits
 RxD and TxD are also included in the datasheet and figure 5-19 -- how are they used?
 
 ==============================================================================
+
+Next, I worked through setting up the interrupt handling, leaving the contents of the button service procedure empty. I looked up the GPIO91 info from the datasheet.
+
+For GPIO91,     GPLR2 monitors pin state
+                GPSR2 status register
+                GPCR2 control register
+                GPDR2 set in direction
+                GRER2 rising edge detect
+                GFER2 falling edge detect
+                GEDR2 detect edge type
+                from Table 24-4 on page 24-11 of datasheet
+                register bitfield definitions on following pages
+
+I want to configure GPIO91 as an input and for rising edge detect. I had the code from my previous project from ECE371 so I walked through that to verify that I still understood it and then I went down and tested it in the lab.
+
+==============================================================================
+
+
