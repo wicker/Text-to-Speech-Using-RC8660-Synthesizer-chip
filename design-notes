@@ -36,7 +36,7 @@ RxD and TxD are also included in the datasheet and figure 5-19 -- how are they u
 
 ==============================================================================
 
-Next, I worked through setting up the interrupt handling, leaving the contents of the button service procedure empty. I looked up the GPIO91 info from the datasheet.
+Second, I worked through setting up the interrupt handling, leaving the contents of the button service procedure empty. I looked up the GPIO91 info from the datasheet.
 
 For GPIO91,     GPLR2 monitors pin state
                 GPSR2 status register
@@ -51,5 +51,25 @@ For GPIO91,     GPLR2 monitors pin state
 I want to configure GPIO91 as an input and for rising edge detect. I had the code from my previous project from ECE371 so I walked through that to verify that I still understood it and then I went down and tested it in the lab.
 
 ==============================================================================
+
+Third, I developed the .data portion. I looked in the RC8660 to find the format for controls, which I converted to hex, and for data, which I left in ascii. I found it difficult to tell which was which if they were all in ascii.
+
+Command syntax in the RC8660 data sheet is on page 20. The default command character (CTRL+A) is 0x01. I decided to go with their recommendation, which is that I use absolute parameters once and then use relative parameters after that.
+
+For example, this string of absolute parameters sets Alvin voice at volume 7:
+
+CTRL+A "9O" CTRL+A "7V" where CTRL+A is also 01
+0x01,0x39,0x30,0x01,0x37,0x56
+
+Data syntax appeared to be ridiculously simple. I started with
+'This is a test' in ascii. I started with T,h,i,s, ,i,s, a, ,t,e,s,t to see.
+
+(This is the point where I got excited about the project.)
+
+How to do stop and start bits?
+
+==============================================================================
+
+
 
 
