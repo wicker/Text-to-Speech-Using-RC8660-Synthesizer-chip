@@ -70,6 +70,65 @@ How to do stop and start bits?
 
 ==============================================================================
 
+Fourth, I went into the UART B on COM2 to figure out the order of operations for its interface to the speech chip, first the hardware and then the interrupts.
 
+Notes on first read-through:
 
+We're not using a parity bit.
+Baud rate supported by RC8660 is 115200 max.
+"Selectable receive FIFO trigger levels, selectable TX and RX baud rates, modem
+interface controls." 
 
+Standard CPU interface or using the bus? I don't know.
+
+Standard CPU 16 Mode
+UART Channel B (pg 5-39)
+CSA CSB CSC CSD
+1   0   1   1
+
+Bus 68 Mode
+UART CHannel B (pg 5-40)
+-CS A4 A3 
+ 0  0  1
+
+I read through the registers twice. No notes. Just thinking about it.
+
+Then I realized that we're writing to the PXA270, not the RC8660! This has been a constant refrain throughout the project.
+
+==============================================================================
+
+Fourth, I read through the UART initialization procedures on pages 275-278 and verified all of the hex and all of the registers. I made up the following algorithm:
+
+INITIALIZE UART
+
+1. Set baud rate	Write to divisor latches
+			Set divisor bit 7 in LCR to 1
+			10000011 = 0x83
+			Choosing baud rate of 38.4k because RC8660 handles it.
+			DLM 0x00
+			DLL 0x18
+			Reset enable bit 7 in LCR to 0.
+
+2. Generate appropriate interrupt signals
+			In the IER, 
+				set bit 3 for CTS# asserted
+				set bit 1 for when THR is available
+				control word: 0x0A
+
+3. Set non-FIFO mode and explicitly clear FIFO	
+	FCR is ISR - how can I be sure I'm writing to the correct register?
+	In any case, write 0x0 to FCR.
+
+4. Hook IRQ vector, install our INT-DIRECTORY procedure.
+
+* Not sure about steps 5 and 6 at this point. Need to verify hex.
+
+*5. Allow interrupt ocntroller to respond to button press on <75> 
+					     and UART on <115>
+			Unmask bit 10 in the IMR
+			0x40D00004 	control word: __________
+
+*6. Enable UART interrupt inside the BUTTON_SVC program so the button 
+	   sends the text message to the RC8660. 
+
+==============================================================================
