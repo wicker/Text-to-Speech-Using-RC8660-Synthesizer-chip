@@ -24,39 +24,6 @@ This algorithm borrows heavily from Figure 5-27 in the text.
 	@ Set bit 10 to enable GPIO10 for rising edge detect
 	@ Write back to GRER0
 
-@ Initalize the UART
-@ Set DLAB bit in LCR to access Baud Rate Divisor
-
-	@ Point to UART LCR
-	@ Value for divisor enable = 1, 8 bits, no parity, 1 stop bit
-	@ Write to LCR
-
-@ Load divisor value to give 38.4k b/s
-
-	@ Pointer to DLL
-	@ #0x18 for 38.4 kb/s
-	@ Write to DLL
-	@ Value for DLM 
-	@ Pre-index to write to DLM
-
-@ Toggle DLAB bit back to 0 to give access to Tx and Rx registers
-
-	@ Point to UART LCR
-	@ Value for divisor enable = 0, 8 bits, no parity, 1 stop bit
-	@ Write to LCR
-
-@ Enable Tx interrupt and enable modem status change interrupt
-
-	@ Pointer to IER
-	@ Bit 3 = CTS, bit 1 = THR
-	@ Write to IER
-
-@ Clear FIFO and turn off FIFO mode
-
-	@ Pointer to FCR
-	@ Value to disable FIFO and clear FIFO
-	@ Write to FCR
-
 @ Initialize interrupt controller for button and UART on IP<10>
 
 	@ Load address of mask (ICMR) register
