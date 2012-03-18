@@ -135,4 +135,11 @@ INITIALIZE UART
 
 Fifth! Having worked out the details of my version of the program, I stepped back to put all the pieces together in an algorithm version using the program in figure 5-27, my interrupt pieces from my buttom program that I know are correct, and the notes I've made up til now about the registers for my GPIO pins.
 
+I realized that the interrupt steps that I have and the ones you had in 5-27 didn't entirely agree ... but realized after walking through registers that they were just out of order and order didn't matter for that case, as the values were already written back before the registers were changed.
+
+I also had to step through every register (I made a diagram on the whiteboard) in the button service and talker service portions to be sure I covered the cases in the correct order, and that there weren't any surprises in the text code.
+
+The final version of that was in algorithm-detailed.
+
 ==============================================================================
+
