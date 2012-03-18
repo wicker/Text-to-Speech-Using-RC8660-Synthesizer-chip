@@ -9,19 +9,19 @@ This algorithm borrows heavily from Figure 5-27 in the text.
 	@ Word to clear bit 91, sign off when output
 	@ Write to GPCR2
 	@ Read GPDR2 to get current value
-	@ Clear bit (11) to make GPIO 91 an input
+	@ Clear bit 27 to make GPIO 91 an input
 	@ Write word back to the GPDR2
 	@ Load address of GRER2 register
 	@ Read current value of GRER2 register
-	@ Load mask to set bit (11)
-	@ Set bit (11)
+	@ Load mask to set bit 27
+	@ Set bit 27
 	@ Write word back to GRER2 register
 
 @ Initialize GPIO 10 as a rising edge interrupt detect for COM2 UART
 
 	@ Point to GRER0 register
 	@ Read GRER0 register
-	@ Set bit (19) to enable GPIO10 for rising edge detect
+	@ Set bit 10 to enable GPIO10 for rising edge detect
 	@ Write back to GRER0
 
 @ Initalize the UART
@@ -104,12 +104,12 @@ INT_DIRECTOR:
 B-- PASSON	@ No, must be other iRQ, pass on to system program
 		@ Load address of GEDR0 register
 		@ Read GEDR0 register address to check if GPIO10 
-		@ Check for UART interrupt on bit <19>
+		@ Check for UART interrupt on bit 10
 B-- TLK_SVC	@ Yes, go send character
 		@ If no, check for button.
 		@ Load GEDR2 register address to check if GPIO91
 		@ Read GEDR2 register value
-		@ Check if bit <11> in GEDR2 = 1
+		@ Check if bit 27 in GEDR2 = 1
 B-- BTN_SVC	@ Yes, must be button press
 		@ Go service the button - return to wait loop from SVC
 		@ No, must be other GPIO 119:2 IRQ, pass on. 
@@ -124,7 +124,7 @@ B-- BTN_SVC	@ Yes, must be button press
 @ The interrupt came from our button on GPIO pin 91
 @ BTN_SVC
 
-		@ Value to clear bit <11> in GEDR2
+		@ Value to clear bit 27 in GEDR2
 		@ This will also reset bit 10 in ICPR and ICIP
 		@      if no other GPIO 119:2 interrupts
 		@ Write to GEDR2.
@@ -141,7 +141,7 @@ B-- BTN_SVC	@ Yes, must be button press
 		@ Save additional registers
 		@ Point to MSR
 		@ Read MSR, resets MSR change interrupt bits
-		@ Check if the CTS# is currently asserted (MSR bit <4>)
+		@ Check if the CTS# is currently asserted (MSR bit 4)
 BEQ NOCTS	@ If not, go check for THR status
 		@ CTS asserted, read LSR (does not clear interrupt)
 		@ Check if THR-ready is asserted
