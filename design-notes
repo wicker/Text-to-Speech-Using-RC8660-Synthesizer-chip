@@ -132,3 +132,7 @@ INITIALIZE UART
 	   sends the text message to the RC8660. 
 
 ==============================================================================
+
+Fifth! Having worked out the details of my version of the program, I stepped back to put all the pieces together in an algorithm version using the program in figure 5-27, my interrupt pieces from my buttom program that I know are correct, and the notes I've made up til now about the registers for my GPIO pins.
+
+==============================================================================
