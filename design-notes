@@ -1,6 +1,6 @@
 Design Log
 
-==============================================================================
+---------------------------------------------
 
 Goal #1 
 
@@ -26,7 +26,7 @@ Goal #3
 Optionally, for extra credit, make the synthesizer do something impressive such as
 play music, sing, speak a foreign language, etc.
 
-==============================================================================
+---------------------------------------------
 
 First, I wanted to figure out this chip. I read through the RC8660 data sheet from the introduction to the serial interface portion on page 10. I drew the IC diagram of the typical application circuit on page 3 and verified that I understood each line. Then I worked with the RS232 section in the text (page 273-275) and summarized:
 
@@ -62,7 +62,7 @@ A message consists of a start bit, 8 bits, a stop bit, another start bit, 8 bits
 
 RxD and TxD are also included in the datasheet and figure 5-19 -- how are they used?
 
-==============================================================================
+---------------------------------------------
 
 Second, I worked through setting up the interrupt handling, leaving the contents of the button service procedure empty. I looked up the GPIO73 info from the datasheet.
 
@@ -78,7 +78,7 @@ For GPIO73,     GPLR2 monitors pin state
 
 I want to configure GPIO73 as an input and for rising edge detect. I had the code from my previous project from ECE371 so I walked through that to verify that I still understood it and then I went down and tested it in the lab.
 
-==============================================================================
+---------------------------------------------
 
 Third, I developed the .data portion. I looked in the RC8660 to find the format for controls, which I converted to hex, and for data, which I left in ascii. I found it difficult to tell which was which if they were all in ascii.
 
@@ -94,9 +94,9 @@ Data syntax appeared to be ridiculously simple. I started with
 
 (This is the point where I got excited about the project.)
 
-How to do stop and start bits?
+How to do stop and start bits? 
 
-==============================================================================
+---------------------------------------------
 
 Fourth, I went into the UART B on COM2 to figure out the order of operations for its interface to the speech chip, first the hardware and then the interrupts.
 
@@ -121,11 +121,11 @@ UART CHannel B (pg 5-40)
 
 I read through the registers twice. No notes. Just thinking about it.
 
-Then I realized that we're writing to the PXA270, not the RC8660! I keep getting this confused.
+Then I realized that we're writing to the PXA270, not the RC8660! I keep getting this confused. I drew all the physical pieces out on the white board to get it straight.
 
-==============================================================================
+---------------------------------------------
 
-Fourth, I read through the UART initialization procedures on pages 275-278 and verified all of the hex and all of the registers. I made up the following algorithm:
+I read through the UART initialization procedures on pages 275-278 and verified all of the hex and all of the registers. I made up the following algorithm:
 
 INITIALIZE UART B in the external 16C554 using COM2 port: 
 
@@ -159,7 +159,7 @@ INITIALIZE UART B in the external 16C554 using COM2 port:
 *6. Enable UART interrupt inside the BUTTON_SVC program so the button 
 	   sends the text message to the RC8660. 
 
-==============================================================================
+---------------------------------------------
 
 Fifth! Having worked out the details of my version of the program, I stepped back to put all the pieces together in an algorithm version using the program in figure 5-27, my interrupt pieces from my buttom program that I know are correct, and the notes I've made up til now about the registers for my GPIO pins.
 
@@ -167,15 +167,17 @@ I realized that the interrupt steps that I have and the ones Dr. Hall has in fig
 
 I also had to step through every register (I made a diagram on the whiteboard) in the button service and talker service portions to be sure I covered the cases in the correct order, and that there weren't any surprises in the text code.
 
-The final version of that was in algorithm-detailed.
+The final version of that was basically sections, which I then drew up in the algorithm/flow chart that's attached. Then I worked through each section, cross-referencing with the book, until I had everything branching correctly. Then I added in the actual register-level comments.
 
-==============================================================================
+Final version of this was all the comments in the part one. 
+
+---------------------------------------------
 
 Before filling in the rest of the actual code to the left of the @ symbols, I went through and changed all the branch names so they were consistent. I verified the process again by walking through each step in the algorithm and making sure all the values were loaded and stored properly. I cleaned up the comments and tried to make them more simple.
 
 Then I printed out the algorithm so far and, starting at the top, I worked through and calculated all the register address values and wrote them in at each step. I then collected them all in a giant list to be defined at the beginning of the program. 
 
-I realized that I didn't actually know what the CPSR, ICIP, etc. addresses should be so I went back through the text and reviewed all the interrupt stuff from chapter four, comparing it line by line with the IRQ procedure hook section from ZeusTalker.s on pages 310-312. I made sure to include the BTLDR_IRQ_ADDRESS in the literal pool but I'm still not sure about where CPSR came from.
+I realized that I didn't actually know what the CPSR, ICIP, etc. addresses should be so I went back through the text and reviewed all the interrupt stuff from chapter four, comparing it line by line with the IRQ procedure hook section from ZeusTalker.s on pages 310-312. I made sure to include the BTLDR_IRQ_ADDRESS in the literal pool but I'm still not sure about where CPSR came from. 
 
 Then I walked through each section and wrote the code.
 
@@ -185,8 +187,10 @@ I basically used the given #0x83 and #0x18 values for the UART straight from the
 
 Decided maybe only need R0, R1 and not the extra registers that are called for in Hall's program. Worked out the talker service and realized, no, you need them for the message and counter.
 
-Also, the BNE and BEQ are switched.
+Also, the BNE and BEQ were switched.
 
-============================================================================
+---------------------------------------------
 
-I set the message to be "take me to your leader" and went to the lab to test it. 
+I set the message to be "take me to your leader" and need to go down to the lab to test it.
+
+---------------------------------------------
