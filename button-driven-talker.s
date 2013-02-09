@@ -60,7 +60,7 @@ STR R1, [R0]	@ Write word back to the GPDR2
 
 LDR R0, GRER2	@ Point to GRER2 register
 LDR R1, [R0]	@ Read current value of GRER2 register
-ORR R1, #0x00000200 @ Load mask to set bit 9
+ORR R1, #BIT9   @ Load mask to set bit 9
 STR R1, [R0]	@ Write word back to GRER2 register
 
 @-----------------------------------------------------------@
@@ -69,7 +69,7 @@ STR R1, [R0]	@ Write word back to GRER2 register
 
 LDR R0, GRER3	@ Point to GRER3 register
 LDR R1, [R0]	@ Read GRER3 register
-ORR R1,R1,BIT14	@ Set bit 14 to enable GPIO110 for rising edge detect
+ORR R1,#BIT14	@ Set bit 14 to enable GPIO110 for rising edge detect
 STR R1, [R0]	@ Write back to GRER3
 
 @-----------------@
@@ -96,7 +96,7 @@ STRB R1, [R0]	@ Write to line control register
 
 		@@ Enable Tx interrupt and enable modem status change interrupt
 LDR R0, IER	@ Pointer to interrupt enable register (IER)
-MOV R1, #0A	@ Bit 3 = modem status interrupt, bit 1 = Tx, interrupt enable
+MOV R1, #0x0A	@ Bit 3 = modem status interrupt, bit 1 = Tx, interrupt enable
 STRB R1, [R0]	@ Write to IER
 
 		@@ Clear FIFO and turn off FIFO mode
