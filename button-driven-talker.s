@@ -49,8 +49,8 @@ _start:
 @ Initialize GPIO 73 as an input and rising edge detect @
 @-------------------------------------------------------@
 
-LDR R0, #GPCR2	@ Point to GPCR2 register
-LDR R1, #BIT9	@ Word to clear bit 9, sign off when output
+LDR R0, =GPCR2	@ Point to GPCR2 register
+LDR R1, =BIT9	@ Word to clear bit 9, sign off when output
 STR R1, [R0]	@ Write to GPCR2
 
 LDR R0, GPDR2	@ Point to GPDR2 register
