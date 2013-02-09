@@ -85,7 +85,7 @@ STRB R1, [R0]	@ Write to line control register
 LDR R0, =DLSB	@ Pointer to divisor low register (DLSB)
 MOV R1, #0x18	@ #0x18 divisor for 38.4Kb/sec
 STRB R1, [R0]	@ Write to divisor low register
-LDR R0, DMSB 	@ Pointer to divisor high register (DMSB)
+LDR R0, =DMSB 	@ Pointer to divisor high register (DMSB)
 MOV R1, #0x00	@ Value for the divisor high register (DMSB)
 STRB R1, [R0]	@ Pre-index to write to divisor high register
 
