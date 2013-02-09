@@ -16,12 +16,13 @@ _start:
 .EQU GPCR2  0x40E0002C
 .EQU GPDR2  0x40E00014
 .EQU GRER2  0x40E00038
-.EQU GRER0  0x40E00030
+.EQU GRER3  0x40E00130
 .EQU GEDR0  0x40E00048
 .EQU GEDR3  0x40E00148
 
 .EQU BIT9   0x00000200   @ Value to clear or set bit 9
 .EQU BIT10  0x00000400   @ Value to clear or set bit 10
+.EQU BIT14  0x00004000   @ Value to clear or set bit 14
 
 .EQU ICIP   0x40D0_0000  @ Interrupt Controller IRQ Pending Register
 .EQU ICMR   0x40D0_0004  @ Interrupt Controller Mask Register
@@ -62,14 +63,14 @@ LDR R1, [R0]	@ Read current value of GRER2 register
 ORR R1,R1,BIT9  @ Load mask to set bit 9
 STR R1, [R0]	@ Write word back to GRER2 register
 
-@----------------------------------------------------------@
-@ Initialize GPIO 10 as a rising edge detect for COM2 UART @
-@----------------------------------------------------------@
+@-----------------------------------------------------------@
+@ Initialize GPIO 110 as a rising edge detect for COM2 UART @
+@-----------------------------------------------------------@
 
-LDR R0, GRER0	@ Point to GRER0 register
-LDR R1, [R0]	@ Read GRER0 register
-ORR R1,R1,BIT9	@ Set bit 10 to enable GPIO10 for rising edge detect
-STR R1, [R0]	@ Write back to GRER0
+LDR R0, GRER3	@ Point to GRER3 register
+LDR R1, [R0]	@ Read GRER3 register
+ORR R1,R1,BIT14	@ Set bit 14 to enable GPIO10 for rising edge detect
+STR R1, [R0]	@ Write back to GRER3
 
 @-----------------@
 @ Initialize UART @
