@@ -55,12 +55,12 @@ STR R1, [R0]	@ Write to GPCR2
 
 LDR R0, GPDR2	@ Point to GPDR2 register
 LDR R1, [R0]	@ Read GPDR2 to get current value
-BIC R1,R1,BIT9  @ Clear bit 9 to make GPIO 73 an input
+BIC R1,BIT9  @ Clear bit 9 to make GPIO 73 an input
 STR R1, [R0]	@ Write word back to the GPDR2
 
 LDR R0, GRER2	@ Point to GRER2 register
 LDR R1, [R0]	@ Read current value of GRER2 register
-ORR R1,R1,BIT9  @ Load mask to set bit 9
+ORR R1,BIT9  @ Load mask to set bit 9
 STR R1, [R0]	@ Write word back to GRER2 register
 
 @-----------------------------------------------------------@
@@ -69,7 +69,7 @@ STR R1, [R0]	@ Write word back to GRER2 register
 
 LDR R0, GRER3	@ Point to GRER3 register
 LDR R1, [R0]	@ Read GRER3 register
-ORR R1,R1,BIT14	@ Set bit 14 to enable GPIO110 for rising edge detect
+ORR R1,BIT14	@ Set bit 14 to enable GPIO110 for rising edge detect
 STR R1, [R0]	@ Write back to GRER3
 
 @-----------------@
