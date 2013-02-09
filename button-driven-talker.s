@@ -124,7 +124,7 @@ STR R0, [R2]	@ Store this address literal pool
 
 LDR R0, ICMR	@ Load address of ICMR register
 LDR R1, [R0]	@ Read current value of ICMR
-ORR R1,R1,BIT10	@ Set bit 10 to unmask IM10
+ORR R1, #BIT10	@ Set bit 10 to unmask IM10
 STR R0, [R1] 	@ Write word back to ICMR register
 
 @------------------------------------------------------------------------@
@@ -154,16 +154,16 @@ IRQ_DIRECTOR:
 	STMFD SP!, {R0-R1, LR}	@ Save registers on stack
 	LDR R0, ICIP	@ Point at IRQ Pending Register (ICIP)
 	LDR R1, [R0]	@ Read ICIP
-	TST R1, BIT10	@ Check if GPIO 119:2 IRQ interrupt on IP<10> asserted
+	TST R1, #BIT10	@ Check if GPIO 119:2 IRQ interrupt on IP<10> asserted
 	BNE PASSON	@ No, must be other IRQ, pass on to system program
 	LDR R0, GEDR0	@ Load address of GEDR0 register
 	LDR R1, [R0]	@ Read GEDR0 register address to check if GPIO10 
-	TST R1, BIT10	@ Check for UART interrupt on bit 10
+	TST R1, #BIT10	@ Check for UART interrupt on bit 10
 	BEQ TLKR_SVC	@ Yes, go send character
 			@ If no, check for button:
 	LDR R0, GEDR2	@ Load GEDR2 register address to check if GPIO73 asserted
 	LDR R1, [R0]	@ Read GEDR2 register value
-	TST R1, BIT9	@ Check if bit 9 in GEDR2 = 1
+	TST R1, #BIT9	@ Check if bit 9 in GEDR2 = 1
 	BEQ BTN_SVC	@ Yes, must be button press, go service the button
 			@ No, must be other GPIO 119:2 IRQ, pass on: 
 
@@ -182,7 +182,7 @@ PASSON:
 BTN_SVC:
 	LDR R0, GEDR2		@ Point to GEDR2 
 	LDR R1, [R0]		@ Read the current value from GEDR2
-	BIC R1,R1,BIT9		@ Clear bit 9
+	BIC R1, #BIT9		@ Clear bit 9
 	STR R1, [R0]		@ Write to GEDR2
 
 	LDR R0, MCR		@ Point to MCR to enable UART interrupt and assert #CTS
@@ -203,7 +203,7 @@ TLKR_SVC:
 	BNE NOCTS	@ If not, go check for THR status
 	LDR R0, LSR	@ Point to LSR
 	LDR R1, [R0]	@ Read LSR
-        TST R1, 0x20	@ Check if THR-ready is asserted
+        TST R1, #0x20	@ Check if THR-ready is asserted
 	BNE GOBCK	@ If no, exit and wait for THR-ready
 	B SEND		@ If yes, both are asserted, send character
 
