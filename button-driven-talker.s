@@ -114,7 +114,7 @@ MOV R2, #0xFF	@ Construct mask
 AND R1, R1, R2	@ Mask all but offset part of instruction
 ADD R1,R1,#0x20	@ Build absolute address of IRQ procedure in literal pool
 LDR R2, [R1]	@ Read BTLDR IRQ address from literal pool
-STR R2, =BTLDR_IRQ_ADDRESS	@ Save BTLDR IRQ address for use in IRQ_DIRECTOR
+STR R2, BTLDR_IRQ_ADDRESS	@ Save BTLDR IRQ address for use in IRQ_DIRECTOR
 LDR R0, =IRQ_DIRECTOR	@ Load absolute address of our interrupt director
 STR R0, [R2]	@ Store this address literal pool
 
@@ -131,7 +131,7 @@ STR R0, [R1] 	@ Write word back to ICMR register
 @ Make sure IRQ interrupt on processor enabled by clearing bit 7 in CPSR @
 @------------------------------------------------------------------------@
 
-MRS R3, =CPSR	@ Copy CPSR to R3
+MRS R3, CPSR	@ Copy CPSR to R3
 BIC R3,R3,#0x80	@ Clear bit 7 (IRQ Enable bit)
 MSR CPSR_c, R3	@ Write new counter value back in memory
 
