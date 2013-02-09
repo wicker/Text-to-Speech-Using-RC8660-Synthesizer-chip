@@ -13,37 +13,37 @@ _start:
 @ Define addresses @
 @------------------@
 
-.EQU GPCR2  0x40E0002C
-.EQU GPDR2  0x40E00014
-.EQU GRER2  0x40E00038
-.EQU GRER3  0x40E00130
-.EQU GEDR0  0x40E00048
-.EQU GEDR3  0x40E00148
+.EQU GPCR2,  0x40E0002C
+.EQU GPDR2,  0x40E00014
+.EQU GRER2,  0x40E00038
+.EQU GRER3,  0x40E00130
+.EQU GEDR0,  0x40E00048
+.EQU GEDR3,  0x40E00148
 
-.EQU BIT9   0x00000200   @ Value to clear or set bit 9
-.EQU BIT10  0x00000400   @ Value to clear or set bit 10
-.EQU BIT14  0x00004000   @ Value to clear or set bit 14
+.EQU BIT9,   0x00000200   @ Value to clear or set bit 9
+.EQU BIT10,  0x00000400   @ Value to clear or set bit 10
+.EQU BIT14,  0x00004000   @ Value to clear or set bit 14
 
-.EQU ICIP   0x40D0_0000  @ Interrupt Controller IRQ Pending Register
-.EQU ICMR   0x40D0_0004  @ Interrupt Controller Mask Register
-.EQU ICPR   0x40D0_0010  @ Interrupt Controller Pending Register
+.EQU ICIP,   0x40D00000  @ Interrupt Controller IRQ Pending Register
+.EQU ICMR,   0x40D00004  @ Interrupt Controller Mask Register
+.EQU ICPR,   0x40D00010  @ Interrupt Controller Pending Register
 
 @--------------------------------@
 @ Define UART Register Addresses @
 @--------------------------------@
 
-.EQU RHR     0x10800000  @ Receive Holding Register
-.EQU THR     0x10800000  @ Transmit Holding Register
-.EQU DLSB    0x10800000  @ Divisor LSB 
-.EQU DMSB    0x10800002  @ Divisor MSB
-.EQU IER     0x10800002  @ Interrupt Enable Register
-.EQU ISR     0x10800004  @ Interrupt Status Register
-.EQU FCR     0x10800004  @ FIFO Control Register
-.EQU LCR     0x10800006  @ Line Control Register
-.EQU MCR     0x10800008  @ Modem Control Register
-.EQU LSR     0x1080000A  @ Line Status Register
-.EQU MSR     0x1080000E  @ Modem Status Register
-.EQU SPR     0x1080000F  @ Scratch Pad Register
+.EQU RHR,     0x10800000  @ Receive Holding Register
+.EQU THR,     0x10800000  @ Transmit Holding Register
+.EQU DLSB,    0x10800000  @ Divisor LSB 
+.EQU DMSB,    0x10800002  @ Divisor MSB
+.EQU IER,     0x10800002  @ Interrupt Enable Register
+.EQU ISR,     0x10800004  @ Interrupt Status Register
+.EQU FCR,     0x10800004  @ FIFO Control Register
+.EQU LCR,     0x10800006  @ Line Control Register
+.EQU MCR,     0x10800008  @ Modem Control Register
+.EQU LSR,     0x1080000A  @ Line Status Register
+.EQU MSR,     0x1080000E  @ Modem Status Register
+.EQU SPR,     0x1080000F  @ Scratch Pad Register
 
 @-------------------------------------------------------@
 @ Initialize GPIO 73 as an input and rising edge detect @
@@ -69,7 +69,7 @@ STR R1, [R0]	@ Write word back to GRER2 register
 
 LDR R0, GRER3	@ Point to GRER3 register
 LDR R1, [R0]	@ Read GRER3 register
-ORR R1,R1,BIT14	@ Set bit 14 to enable GPIO10 for rising edge detect
+ORR R1,R1,BIT14	@ Set bit 14 to enable GPIO110 for rising edge detect
 STR R1, [R0]	@ Write back to GRER3
 
 @-----------------@
