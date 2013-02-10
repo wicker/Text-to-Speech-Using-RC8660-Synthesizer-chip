@@ -112,7 +112,7 @@ LDR R1, [R0]	@ Write to FCR
 
 MOV R0, #0x18	@ Load IRQ interrupt vector address 0x18
 LDR R1, [R0]	@ Read instruction from interrupt vector table at 0x18
-MOV R2, #0xFF	@ Construct mask
+MOV R2, #0xFFF	@ Construct mask
 AND R1, R1, R2	@ Mask all but offset part of instruction
 ADD R1,R1,#0x20	@ Build absolute address of IRQ procedure in literal pool
 LDR R2, [R1]	@ Read BTLDR IRQ address from literal pool
@@ -124,7 +124,7 @@ STR R0, [R2]	@ Store this address literal pool
 @ Initialize interrupt controller for button and UART on IP<10> @
 @---------------------------------------------------------------@
 
-LDR R0, =ICMR	@ Load address of ICMR register
+LDR R0, =ICMR	@ Load pointer to address of ICMR register
 LDR R1, [R0]	@ Read current value of ICMR
 ORR R1, #BIT10	@ Set bit 10 to unmask IM10
 STR R0, [R1] 	@ Write word back to ICMR register
