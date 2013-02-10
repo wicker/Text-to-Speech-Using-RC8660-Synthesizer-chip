@@ -26,6 +26,7 @@ _start:
 .EQU BIT9,   0x00000200   @ Value to clear or set bit 9
 .EQU BIT10,  0x00000400   @ Value to clear or set bit 10
 .EQU BIT14,  0x00004000   @ Value to clear or set bit 14
+.EQU BIT20,  0x00080000   @ Value to clear or set bit 20
 
 .EQU ICIP,   0x40D00000  @ Interrupt Controller IRQ Pending Register
 .EQU ICMR,   0x40D00004  @ Interrupt Controller Mask Register
@@ -53,7 +54,9 @@ _start:
 @-------------------------------------------@
 
 LDR R0, =GAFR2L @ Load pointer to GAFR2_L register
-LDR R1, [R0]    @ Read the value from that register to see if it's 0b00 or 0b10
+LDR R1, [R0]    @ Read GAFR2_L to get current value
+BIC R1, #BIT20  @ Clear bit 20 to make GPIO 73 not an alternate function
+STR R1, [R0]    @ Write word back to the GAFR2_L
 
 @-------------------------------------------------------@
 @ Initialize GPIO 73 as an input and rising edge detect @
