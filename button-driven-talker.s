@@ -22,6 +22,7 @@ _start:
 .EQU GEDR2,  0x40E00050
 .EQU GEDR3,  0x40E00148
 
+.EQU BIT7,   0x00000080   @ Value to clear or set bit 7
 .EQU BIT9,   0x00000200   @ Value to clear or set bit 9
 .EQU BIT10,  0x00000400   @ Value to clear or set bit 10
 .EQU BIT14,  0x00004000   @ Value to clear or set bit 14
@@ -112,13 +113,13 @@ LDR R1, [R0]	@ Write to FCR
 
 MOV R0, #0x18	@ Load IRQ interrupt vector address 0x18
 LDR R1, [R0]	@ Read instruction from interrupt vector table at 0x18
-MOV R2, #0xFFF	@ Construct mask
+LDR R2, =0xFFF  @ Construct mask
 AND R1, R1, R2	@ Mask all but offset part of instruction
 ADD R1,R1,#0x20	@ Build absolute address of IRQ procedure in literal pool
 LDR R2, [R1]	@ Read BTLDR IRQ address from literal pool
 STR R2, BTLDR_IRQ_ADDRESS	@ Save BTLDR IRQ address for use in IRQ_DIRECTOR
-LDR R0, =IRQ_DIRECTOR	@ Load absolute address of our interrupt director
-STR R0, [R2]	@ Store this address literal pool
+LDR R3, =IRQ_DIRECTOR	@ Load absolute address of our interrupt director
+STR R3, [R1]	@ Store this address literal pool
 
 @---------------------------------------------------------------@
 @ Initialize interrupt controller for button and UART on IP<10> @
@@ -134,8 +135,9 @@ STR R0, [R1] 	@ Write word back to ICMR register
 @------------------------------------------------------------------------@
 
 MRS R3, CPSR	@ Copy CPSR to R3
-BIC R3,R3,#0x80	@ Clear bit 7 (IRQ Enable bit)
+BIC R3, #BIT7	@ Clear bit 7 (IRQ Enable bit)
 MSR CPSR_c, R3	@ Write new counter value back in memory
+		@ _c means modify the lower eight bits only
 
 @ ============================================================================ @
 @ RUNTIME PHASE								       @
