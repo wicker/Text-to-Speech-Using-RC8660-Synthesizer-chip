@@ -15,6 +15,7 @@ _start:
 
 .EQU GPCR2,  0x40E0002C
 .EQU GPDR2,  0x40E00014
+.EQU GRER0,  0x40E00030
 .EQU GRER2,  0x40E00038
 .EQU GRER3,  0x40E00130
 .EQU GEDR0,  0x40E00048
@@ -64,14 +65,14 @@ LDR R1, [R0]	@ Read current value of GRER2 register
 ORR R1, #BIT9   @ Load mask to set bit 9
 STR R1, [R0]	@ Write word back to GRER2 register
 
-@-----------------------------------------------------------@
-@ Initialize GPIO 110 as a rising edge detect for COM2 UART @
-@-----------------------------------------------------------@
+@----------------------------------------------------------@
+@ Initialize GPIO 10 as a rising edge detect for COM2 UART @
+@----------------------------------------------------------@
 
-LDR R0, =GRER3	@ Point to GRER3 register
-LDR R1, [R0]	@ Read GRER3 register
-ORR R1,#BIT14	@ Set bit 14 to enable GPIO110 for rising edge detect
-STR R1, [R0]	@ Write back to GRER3
+LDR R0, =GRER0	@ Point to GRER0 register
+LDR R1, [R0]	@ Read GRER0 register
+ORR R1,#BIT10	@ Set bit 14 to enable GPIO10 for rising edge detect
+STR R1, [R0]	@ Write back to GRER0
 
 @-----------------@
 @ Initialize UART @
