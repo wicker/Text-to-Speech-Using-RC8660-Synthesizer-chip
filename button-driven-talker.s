@@ -21,8 +21,8 @@ _start:
 .EQU GEDR0,  0x40E00048
 .EQU GEDR2,  0x40E00050
 .EQU GEDR3,  0x40E00148
+.EQU GAFR2L, 0x40E00064
 
-.EQU BIT7,   0x00000080   @ Value to clear or set bit 7
 .EQU BIT9,   0x00000200   @ Value to clear or set bit 9
 .EQU BIT10,  0x00000400   @ Value to clear or set bit 10
 .EQU BIT14,  0x00004000   @ Value to clear or set bit 14
@@ -47,6 +47,13 @@ _start:
 .EQU LSR,     0x1080000A  @ Line Status Register
 .EQU MSR,     0x1080000E  @ Modem Status Register
 .EQU SPR,     0x1080000F  @ Scratch Pad Register
+
+@-------------------------------------------@
+@ Set GPIO 73 back to Alternate Function 00 @
+@-------------------------------------------@
+
+LDR R0, =GAFR2L @ Load pointer to GAFR2_L register
+LDR R1, [R0]    @ Read the value from that register to see if it's 0b00 or 0b10
 
 @-------------------------------------------------------@
 @ Initialize GPIO 73 as an input and rising edge detect @
@@ -96,6 +103,7 @@ STRB R1, [R0]	@ Pre-index to write to divisor high register
 LDR R0, =LCR	@ Point to COM2 UART line control register
 MOV R1, #0x03	@ Value for divisor enable = 0, 8 bits, no parity, 1 stop bit
 STRB R1, [R0]	@ Write to line control register
+
 
 		@@ Enable Tx interrupt and enable modem status change interrupt
 LDR R0, =IER	@ Pointer to interrupt enable register (IER)
@@ -292,5 +300,3 @@ CHAR_PTR:
 
 CHAR_COUNT: 
 	.word 24
-
-.end
