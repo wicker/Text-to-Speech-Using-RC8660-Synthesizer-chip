@@ -58,8 +58,7 @@ _start:
 	LDR R2,[R1]		@ Read instr from interrupt vector table at 0x18 
 	LDR R3,=0xFFF		@ Construct mask 
 	AND R2,R2,R3		@ Mask all but offset part of instruction 
-	ADD R2,R2,#0x20		@ Build absolute address of IRQ procedure in literal 
-				@ pool 
+	ADD R2,R2,#0x20		@ Build absolute address of IRQ procedure 
 	LDR R3,[R2]		@ Read BTLDR IRQ address from literal pool 
 	STR R3,BTLDR_IRQ_ADDRESS @ Save BTLDR IRQ address for use in IRQ_DIRECTOR 
 	LDR R0,=INT_DIRECTOR	@ Load absolute address of our interrupt director 
@@ -82,22 +81,22 @@ LOOP:	NOP			@ Wait for interrupt here (simulate mainline
 @ HOUSTON WE HAVE AN INTERRUPT -- IS IT BUTTON OR SOMETHING ELSE? 
 @ 
 INT_DIRECTOR:		@ Chains button interrupt procedure 
-        STMFD SP!, {R0-R1, LR}  @ Save registers on stack
+        STMFD SP!, {R0-R3, LR}  @ Save registers on stack
         LDR R0, =ICIP   @ Point at IRQ Pending Register (ICIP)
         LDR R1, [R0]    @ Read ICIP
         TST R1, #0x400  @ Check if GPIO 119:2 IRQ interrupt on IP<10> asserted
-        BNE PASSON      @ No, must be other IRQ, pass on to system program
+        BEQ PASSON      @ No, must be other IRQ, pass on to system program
         LDR R0, =GEDR2  @ Load GEDR2 register address to check if GPIO73 asserted
         LDR R1, [R0]    @ Read GEDR2 register value
         TST R1, #0x200   @ Check if bit 9 in GEDR2 = 1
-        BEQ BUTTON_SVC     @ Yes, must be button press, go service the button
+        BNE BUTTON_SVC     @ Yes, must be button press, go service the button
                         @ No, must be other GPIO 119:2 IRQ, pass on:
 
 @ 
 @ IT'S NOT THE BUTTON, IT'S NOT THE BUTTON 
 @ 
 PASSON: LDMFD SP!,{R0-R3,LR}	@ No, must be other GP 80:2 IRQ, restore registers 
-	LDR PC,BTLDR_IRQ_ADDRESS @ Go to bootloader IRQ service procedure 
+	LDR PC,=BTLDR_IRQ_ADDRESS @ Go to bootloader IRQ service procedure 
 				@ Bootloader will use restored LR to return to 
 				@ mainline loop when done. 
 @ 
@@ -107,17 +106,17 @@ PASSON: LDMFD SP!,{R0-R3,LR}	@ No, must be other GP 80:2 IRQ, restore registers
 BUTTON_SVC: 
 	LDR R0, =GEDR2		@ Point to GEDR2 
 	LDR R1, [R0]		@ Read the current value from GEDR2
-	BIC R1, R1, #0x200		@ Clear bit 9
+	BIC R1, R1, #0x200	@ Clear bit 9, which also clears ICIP and ICMR
 	STR R1, [R0]		@ Write to GEDR2
+	B   GOBCK
 
-	LDMFD SP!,{R0-R1,LR}	@ Restore registers, including return address 
+GOBCK:
+	LDMFD SP!,{R0-R3,LR}	@ Restore registers, including return address 
 	SUBS PC,LR,#4		@ Return from interrupt (to wait loop) 
 
 BTLDR_IRQ_ADDRESS: 
 
-	 .word 0x0		@ Space to store bootloader IRQ address 
+	.word 0x0		@ Space to store bootloader IRQ address 
 
 .data 
-DELAYCOUNT: 	.word 0x0A305660	@ This hex contains 170,940,170 clock cycles 
-ONOROFF: 	.word 0xB		@ 0xA means on, 0xB is off - should initially be off
 .end
