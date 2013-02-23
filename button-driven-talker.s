@@ -23,10 +23,11 @@ _start:
 .EQU GEDR3,  0x40E00148
 .EQU GAFR2L, 0x40E00064
 
+.EQU BIT7,   0x00000080   @ Value to clear or set bit 7
 .EQU BIT9,   0x00000200   @ Value to clear or set bit 9
 .EQU BIT10,  0x00000400   @ Value to clear or set bit 10
 .EQU BIT14,  0x00004000   @ Value to clear or set bit 14
-.EQU BIT20,  0x00080000   @ Value to clear or set bit 20
+.EQU BIT20,  0x00100000   @ Value to clear or set bit 20
 
 .EQU ICIP,   0x40D00000  @ Interrupt Controller IRQ Pending Register
 .EQU ICMR,   0x40D00004  @ Interrupt Controller Mask Register
@@ -107,19 +108,13 @@ LDR R0, =LCR	@ Point to COM2 UART line control register
 MOV R1, #0x03	@ Value for divisor enable = 0, 8 bits, no parity, 1 stop bit
 STRB R1, [R0]	@ Write to line control register
 
-
-		@@ Enable Tx interrupt and enable modem status change interrupt
-LDR R0, =IER	@ Pointer to interrupt enable register (IER)
-MOV R1, #0x0A	@ Bit 3 = modem status interrupt, bit 1 = Tx, interrupt enable
-STRB R1, [R0]	@ Write to IER
-
 		@@ Clear FIFO and turn off FIFO mode
 LDR R0, =FCR	@ Pointer to FIFO Control Register (FCR)
 MOV R1, #0x00	@ Value to disable FIFO and clear FIFO
 LDR R1, [R0]	@ Write to FCR
 
 @-----------------------------------------------------------------@
-@ Hook IRQ procedure address and install out IRQ_DIRECTOR address @
+@ Hook IRQ procedure address and install our IRQ_DIRECTOR address @
 @-----------------------------------------------------------------@
 
 MOV R0, #0x18	@ Load IRQ interrupt vector address 0x18
@@ -129,7 +124,7 @@ AND R1, R1, R2	@ Mask all but offset part of instruction
 ADD R1,R1,#0x20	@ Build absolute address of IRQ procedure in literal pool
 LDR R2, [R1]	@ Read BTLDR IRQ address from literal pool
 STR R2, BTLDR_IRQ_ADDRESS	@ Save BTLDR IRQ address for use in IRQ_DIRECTOR
-LDR R3, =IRQ_DIRECTOR	@ Load absolute address of our interrupt director
+LDR R3, =IRQ_DIRECTOR		@ Load absolute address of our interrupt director
 STR R3, [R1]	@ Store this address literal pool
 
 @---------------------------------------------------------------@
@@ -199,6 +194,11 @@ BTN_SVC:
 	LDR R1, [R0]		@ Read the current value from GEDR2
 	BIC R1, #BIT9		@ Clear bit 9
 	STR R1, [R0]		@ Write to GEDR2
+
+        @@ Enable Tx interrupt and enable modem status change interrupt
+	LDR R0, =IER	        @ Pointer to interrupt enable register (IER)
+	MOV R1, #0x0A	        @ Bit 3 = modem status int, bit 1 = Tx enable
+	STRB R1, [R0]	        @ Write to IER
 
 	LDR R0, =MCR		@ Point to MCR to enable UART interrupt and assert #CTS
 	MOV R1, #0x0A		@ Enable UART interrupt

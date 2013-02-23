@@ -186,7 +186,7 @@ I got a little lost in the bit sets and clears and had to use some diagrams to f
 I basically used the given #0x83 and #0x18 values for the UART straight from the text. Probably need to check it against the UART datasheet but at this point I just want to see if it works on the first try.
 
 Decided maybe only need R0, R1 and not the extra registers that are called for in Hall's program. Worked out the talker service and realized, no, you need them for the message and counter.
-
+	
 Also, the BNE and BEQ were switched.
 
 ---------------------------------------------
@@ -194,3 +194,16 @@ Also, the BNE and BEQ were switched.
 I set the message to be "take me to your leader" and need to go down to the lab to test it.
 
 ---------------------------------------------
+
+Had a bunch of trouble getting Insight to reliably connect to the Zeus board.
+
+Minor syntactic changes required to the =ICMR, etc. Immediate offsets with #CLRBIT27, etc. The mask xFFF was too big so I had to create an equivalent expression with 
+
+MOV R2, #0xFF0
+ADD R2, R2, #0xF
+
+Program received signal SIGBUS, Bus error at line 122 so there's something wrong with the bootloader IRQ addressing. Is IRQ_DIRECTOR a constant that needs to be initialized in the same way IRQ_BTLDR_ADDRESS does on the literal pool? Or is it a system-wide thing that can just be out there in the ether? No, IRQ_DIRECTOR is just the procedure of interest and basically I was overwriting the IRQ_BTLDR_ADDRESS.
+
+Next SIGBUS error at line 140, in the section to clear bit 7 in CPSR. Changed syntax to be the same as above. Looked at registers. Possibly a problem with the PC being corrupted so I tried the code from last year and now it has exactly the same problem, but it survives past the error and the PC takes on 0x6000e3cc which is not an increment.
+
+... I ran the program again but chose to step through using assembly instruction stepthrough. It successfully ends up in the LOOP but now just won't recognize the interrupt. TA says it's probably because I haven't remapped the AF for the GPIO pin 73 for the button by using table 24-29 (GAFR2_L Bit Definitions). The value for that register was 0x6aaaaaaa. I made a mask and wrote back to it. New value should be 0x6aa2aaaa.
