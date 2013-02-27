@@ -23,6 +23,8 @@ _start:
 .EQU GEDR3,  0x40E00148
 .EQU GAFR2L, 0x40E00064
 
+.EQU CAFRL,  0x000C0000   @ Value to clear or set bits 19 and 20
+
 .EQU BIT7,   0x00000080   @ Value to clear or set bit 7
 .EQU BIT9,   0x00000200   @ Value to clear or set bit 9
 .EQU BIT10,  0x00000400   @ Value to clear or set bit 10
@@ -56,7 +58,7 @@ _start:
 
 LDR R0, =GAFR2L @ Load pointer to GAFR2_L register
 LDR R1, [R0]    @ Read GAFR2_L to get current value
-BIC R1, #BIT20  @ Clear bit 20 to make GPIO 73 not an alternate function
+BIC R1, #CAFRL  @ Clear bits 19 and 20 to make GPIO 73 not an alternate function
 STR R1, [R0]    @ Write word back to the GAFR2_L
 
 @-------------------------------------------------------@
@@ -64,7 +66,8 @@ STR R1, [R0]    @ Write word back to the GAFR2_L
 @-------------------------------------------------------@
 
 LDR R0, =GPCR2	@ Point to GPCR2 register
-LDR R1, =BIT9	@ Word to clear bit 9, sign off when output
+LDR R1, [R0]    @ Read current value of GPCR2 register
+ORR R1, #BIT9	@ Word to clear bit 9, sign off when output
 STR R1, [R0]	@ Write to GPCR2
 
 LDR R0, =GPDR2	@ Point to GPDR2 register
@@ -83,7 +86,7 @@ STR R1, [R0]	@ Write word back to GRER2 register
 
 LDR R0, =GRER0	@ Point to GRER0 register
 LDR R1, [R0]	@ Read GRER0 register
-ORR R1,#BIT10	@ Set bit 14 to enable GPIO10 for rising edge detect
+ORR R1, #BIT10	@ Set bit 14 to enable GPIO10 for rising edge detect
 STR R1, [R0]	@ Write back to GRER0
 
 @-----------------@
@@ -119,7 +122,7 @@ LDR R1, [R0]	@ Write to FCR
 
 MOV R0, #0x18	@ Load IRQ interrupt vector address 0x18
 LDR R1, [R0]	@ Read instruction from interrupt vector table at 0x18
-LDR R2, =0xFFF  @ Construct mask
+LDR R2, =0xFF   @ Construct mask (FFF or FF)?
 AND R1, R1, R2	@ Mask all but offset part of instruction
 ADD R1,R1,#0x20	@ Build absolute address of IRQ procedure in literal pool
 LDR R2, [R1]	@ Read BTLDR IRQ address from literal pool
@@ -165,16 +168,16 @@ IRQ_DIRECTOR:
 	LDR R0, =ICIP	@ Point at IRQ Pending Register (ICIP)
 	LDR R1, [R0]	@ Read ICIP
 	TST R1, #BIT10	@ Check if GPIO 119:2 IRQ interrupt on IP<10> asserted
-	BNE PASSON	@ No, must be other IRQ, pass on to system program
+	BEQ PASSON	@ No, must be other IRQ, pass on to system program
 	LDR R0, =GEDR0	@ Load address of GEDR0 register
 	LDR R1, [R0]	@ Read GEDR0 register address to check if GPIO10 
 	TST R1, #BIT10	@ Check for UART interrupt on bit 10
-	BEQ TLKR_SVC	@ Yes, go send character
+	BNE TLKR_SVC	@ Yes, go send character
 			@ If no, check for button:
 	LDR R0, =GEDR2	@ Load GEDR2 register address to check if GPIO73 asserted
 	LDR R1, [R0]	@ Read GEDR2 register value
 	TST R1, #BIT9	@ Check if bit 9 in GEDR2 = 1
-	BEQ BTN_SVC	@ Yes, must be button press, go service the button
+	BNE BTN_SVC	@ Yes, must be button press, go service the button
 			@ No, must be other GPIO 119:2 IRQ, pass on: 
 
 @-----------------------------------------------------------@
@@ -182,7 +185,7 @@ IRQ_DIRECTOR:
 @-----------------------------------------------------------@
 
 PASSON: 
-	LDMFD SP!, {R0-R1,LR}		@ Restore the registers
+	LDMFD SP!, {R0-R3,LR}		@ Restore the registers
 	LDR PC, =BTLDR_IRQ_ADDRESS	@ Go to bootloader IRQ service procedure
 
 @-------------------------------------------------------------@
@@ -192,7 +195,7 @@ PASSON:
 BTN_SVC:
 	LDR R0, =GEDR2		@ Point to GEDR2 
 	LDR R1, [R0]		@ Read the current value from GEDR2
-	BIC R1, #BIT9		@ Clear bit 9
+	ORR R1, #BIT9		@ Set bit 9 to clear the interrupt from pin 73
 	STR R1, [R0]		@ Write to GEDR2
 
         @@ Enable Tx interrupt and enable modem status change interrupt
@@ -211,15 +214,15 @@ BTN_SVC:
 @---------------------------------------------------------------------------------@
 
 TLKR_SVC:
-	STMFD SP!, {R2-R5}	@ Save additional registers
+	STMFD SP!,{R2-R5}	@ Save additional registers
 	LDR R0, =MSR	@ Point to MSR
 	LDR R1, [R0]	@ Read MSR, resets MSR change interrupt bits
 	TST R1, #0x10	@ Check if the CTS# is currently asserted (MSR bit 4)
-	BNE NOCTS	@ If not, go check for THR status
+	BEQ NOCTS	@ If not, go check for THR status
 	LDR R0, =LSR	@ Point to LSR
 	LDR R1, [R0]	@ Read LSR
         TST R1, #0x20	@ Check if THR-ready is asserted
-	BNE GOBCK	@ If no, exit and wait for THR-ready
+	BEQ GOBCK	@ If no, exit and wait for THR-ready
 	B SEND		@ If yes, both are asserted, send character
 
 @--------------------------------------------------@
@@ -230,7 +233,7 @@ NOCTS:
 	LDR R0, =LSR	@ Point to LSR
 	LDR R1, [R0]	@ Read LSR (does not clear interrupt)
 	TST R1, #0x20	@ Check if THR-ready is asserted
-	BNE GOBCK	@ Neither CTS or THR are asserted, must be other source
+	BEQ GOBCK	@ Neither CTS or THR are asserted, must be other source
 			@ Else no CTS# but THR asserted, disable interrupt on THR
 			@       to prevent spinning while waiting for CTS#
 	LDR R0, =IER	@ Load IER
