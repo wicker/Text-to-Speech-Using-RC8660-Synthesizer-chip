@@ -25,6 +25,7 @@ _start:
 
 .EQU CAFRL,  0x000C0000   @ Value to clear or set bits 19 and 20
 
+.EQU BIT0,   0x00000001
 .EQU BIT7,   0x00000080   @ Value to clear or set bit 7
 .EQU BIT9,   0x00000200   @ Value to clear or set bit 9
 .EQU BIT10,  0x00000400   @ Value to clear or set bit 10
@@ -34,6 +35,8 @@ _start:
 .EQU ICIP,   0x40D00000  @ Interrupt Controller IRQ Pending Register
 .EQU ICMR,   0x40D00004  @ Interrupt Controller Mask Register
 .EQU ICPR,   0x40D00010  @ Interrupt Controller Pending Register
+.EQU ICCR,   0x40D00014  @ Interrupt Controller Control Register
+.EQU ICLR,   0x40D00008  @ Interrupt Controller Level Register
 
 @--------------------------------@
 @ Define UART Register Addresses @
@@ -49,8 +52,8 @@ _start:
 .EQU LCR,     0x10800006  @ Line Control Register
 .EQU MCR,     0x10800008  @ Modem Control Register
 .EQU LSR,     0x1080000A  @ Line Status Register
-.EQU MSR,     0x1080000E  @ Modem Status Register
-.EQU SPR,     0x1080000F  @ Scratch Pad Register
+.EQU MSR,     0x1080000C  @ Modem Status Register
+.EQU SPR,     0x1080000E  @ Scratch Pad Register
 
 @-------------------------------------------@
 @ Set GPIO 73 back to Alternate Function 00 @
