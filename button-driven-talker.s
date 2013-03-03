@@ -25,7 +25,9 @@ _start:
 
 .EQU CAFRL,  0x000C0000   @ Value to clear or set bits 19 and 20
 
-.EQU BIT0,   0x00000001
+.EQU BIT0,   0x00000001   @ Value to clear or set bit 0
+.EQU BIT4,   0x00000010   @ Value to clear or set bit 4
+.EQU BIT6,   0x00000040   @ Value to clear or set bit 6
 .EQU BIT7,   0x00000080   @ Value to clear or set bit 7
 .EQU BIT9,   0x00000200   @ Value to clear or set bit 9
 .EQU BIT10,  0x00000400   @ Value to clear or set bit 10
@@ -89,35 +91,36 @@ STR R1, [R0]	@ Write word back to GRER2 register
 
 LDR R0, =GRER0	@ Point to GRER0 register
 LDR R1, [R0]	@ Read GRER0 register
-ORR R1, #BIT10	@ Set bit 14 to enable GPIO10 for rising edge detect
+ORR R1, #BIT10	@ Set bit 10 to enable GPIO10 for rising edge detect
 STR R1, [R0]	@ Write back to GRER0
 
 @-----------------@
 @ Initialize UART @
 @-----------------@
 
-		@@ Set DLAB bit in line control register to access baud rate divisor
+@@ Set DLAB bit in line control register to access baud rate divisor
 LDR R0, =LCR	@ Point to UART line control register
 MOV R1, #0x83	@ Value for divisor enable = 1, 8 bits, no parity, 1 stop bit
-STRB R1, [R0]	@ Write to line control register
+STRB R1, [R0]	@ Write byte back to LCR
 
-		@@ Load divisor value to give 38.4Kb/sec
+@@ Load divisor value to give 38.4Kb/sec
 LDR R0, =DLSB	@ Pointer to divisor low register (DLSB)
 MOV R1, #0x18	@ #0x18 divisor for 38.4Kb/sec
-STRB R1, [R0]	@ Write to divisor low register
+STRB R1, [R0]	@ Write byte back to DLSB
+
 LDR R0, =DMSB 	@ Pointer to divisor high register (DMSB)
 MOV R1, #0x00	@ Value for the divisor high register (DMSB)
-STRB R1, [R0]	@ Pre-index to write to divisor high register
+STRB R1, [R0]	@ Write byte back to DMSB
 
-		@@ Toggle DLAB bit back to 0 to give access to Tx and Rx registers
+@@ Toggle DLAB bit back to 0 to give access to Tx and Rx registers
 LDR R0, =LCR	@ Point to COM2 UART line control register
 MOV R1, #0x03	@ Value for divisor enable = 0, 8 bits, no parity, 1 stop bit
-STRB R1, [R0]	@ Write to line control register
+STRB R1, [R0]	@ Write byte back to LCR
 
-		@@ Clear FIFO and turn off FIFO mode
+@@ Clear FIFO and turn off FIFO mode
 LDR R0, =FCR	@ Pointer to FIFO Control Register (FCR)
 MOV R1, #0x00	@ Value to disable FIFO and clear FIFO
-LDR R1, [R0]	@ Write to FCR
+LDR R1, [R0]	@ Write word back to FCR
 
 @-----------------------------------------------------------------@
 @ Hook IRQ procedure address and install our IRQ_DIRECTOR address @
@@ -137,9 +140,19 @@ STR R3, [R1]	@ Store this address literal pool
 @ Initialize interrupt controller for button and UART on IP<10> @
 @---------------------------------------------------------------@
 
+LDR R0, =ICCR	@ Load pointer to address of ICCR register
+LDR R1, [R0]	@ Read current value of ICCR
+ORR R1, #BIT0	@ Set bit 0 (DIM bit) to only allow unmasked interrupts
+STR R0, [R1] 	@ Write word back to ICMR register
+
 LDR R0, =ICMR	@ Load pointer to address of ICMR register
 LDR R1, [R0]	@ Read current value of ICMR
 ORR R1, #BIT10	@ Set bit 10 to unmask IM10
+STR R0, [R1] 	@ Write word back to ICMR register
+
+LDR R0, =ICLR	@ Load pointer to address of ICMR register
+LDR R1, [R0]	@ Read current value of ICMR
+ORR R1, #0x00	@ Set all bits to 0 to only trigger an IRQ
 STR R0, [R1] 	@ Write word back to ICMR register
 
 @------------------------------------------------------------------------@
@@ -172,11 +185,12 @@ IRQ_DIRECTOR:
 	LDR R1, [R0]	@ Read ICIP
 	TST R1, #BIT10	@ Check if GPIO 119:2 IRQ interrupt on IP<10> asserted
 	BEQ PASSON	@ No, must be other IRQ, pass on to system program
+
 	LDR R0, =GEDR0	@ Load address of GEDR0 register
 	LDR R1, [R0]	@ Read GEDR0 register address to check if GPIO10 
 	TST R1, #BIT10	@ Check for UART interrupt on bit 10
 	BNE TLKR_SVC	@ Yes, go send character
-			@ If no, check for button:
+
 	LDR R0, =GEDR2	@ Load GEDR2 register address to check if GPIO73 asserted
 	LDR R1, [R0]	@ Read GEDR2 register value
 	TST R1, #BIT9	@ Check if bit 9 in GEDR2 = 1
@@ -188,7 +202,7 @@ IRQ_DIRECTOR:
 @-----------------------------------------------------------@
 
 PASSON: 
-	LDMFD SP!, {R0-R3,LR}		@ Restore the registers
+	LDMFD SP!, {R0-R1,LR}		@ Restore the registers
 	LDR PC, =BTLDR_IRQ_ADDRESS	@ Go to bootloader IRQ service procedure
 
 @-------------------------------------------------------------@
@@ -209,6 +223,7 @@ BTN_SVC:
 	LDR R0, =MCR		@ Point to MCR to enable UART interrupt and assert #CTS
 	MOV R1, #0x0A		@ Enable UART interrupt
 	STRB R1, [R0]		@ Write back to MCR
+
 	LDMFD SP!, {R0-R1,LR}	@ Restore registers, including return address
 	SUBS PC, LR, #4		@ Return from interrupt to wait loop
 
@@ -217,16 +232,19 @@ BTN_SVC:
 @---------------------------------------------------------------------------------@
 
 TLKR_SVC:
-	STMFD SP!,{R2-R5}	@ Save additional registers
-	LDR R0, =MSR	@ Point to MSR
-	LDR R1, [R0]	@ Read MSR, resets MSR change interrupt bits
-	TST R1, #0x10	@ Check if the CTS# is currently asserted (MSR bit 4)
-	BEQ NOCTS	@ If not, go check for THR status
-	LDR R0, =LSR	@ Point to LSR
-	LDR R1, [R0]	@ Read LSR
-        TST R1, #0x20	@ Check if THR-ready is asserted
-	BEQ GOBCK	@ If no, exit and wait for THR-ready
-	B SEND		@ If yes, both are asserted, send character
+	STMFD SP!,{R2-R5}  @ Save additional registers
+
+	LDR R0, =MSR	   @ Point to MSR
+	LDR R1, [R0]	   @ Read MSR, resets MSR change interrupt bits
+	TST R1, #BIT4	   @ Check if the CTS# is currently asserted (MSR bit 4)
+	BEQ NOCTS	   @ If not, go check for THR status
+
+	LDR R0, =LSR	   @ Point to LSR
+	LDR R1, [R0]	   @ Read LSR
+        TST R1, #BIT6	   @ Check if THR-ready is asserted
+	BEQ GOBCK	   @ If no, exit and wait for THR-ready
+
+	B SEND		   @ If yes, both are asserted, send character
 
 @--------------------------------------------------@
 @ NOCTS - The interrupt did not come from CTS# low @
@@ -236,9 +254,10 @@ NOCTS:
 	LDR R0, =LSR	@ Point to LSR
 	LDR R1, [R0]	@ Read LSR (does not clear interrupt)
 	TST R1, #0x20	@ Check if THR-ready is asserted
-	BEQ GOBCK	@ Neither CTS or THR are asserted, must be other source
+	BEQ GOBCK	@ Neither CTS# or THR are asserted, must be other source
 			@ Else no CTS# but THR asserted, disable interrupt on THR
-			@       to prevent spinning while waiting for CTS#
+			@ to prevent spinning while waiting for CTS#
+
 	LDR R0, =IER	@ Load IER
 	MOV R1, #0x08	@ Disable bit 1 = Tx interrupt enable (Mask THR)
 	STR R1, [R0]	@ Write to IER
@@ -259,6 +278,7 @@ SEND:
 	LDR R3, [R2]		@ Get current char count value
 	LDRB R4, [R1], #1	@ Load char from string, increment char pointer
 	STR R1, [R0]		@ Put incremented char address into CHAR_PTR for next time
+
 	LDR R5, =THR		@ Point at UART THR
 	STR R4, [R5]		@ Write char to THR, which clears interrupt source for now
 	SUBS R3, R3, #1		@ Decrement char counter by 1
@@ -269,10 +289,11 @@ SEND:
 	LDR R3, =MESSAGE	@ If not, reload the message. Get address of start string.
 	STR R3, [R0]		@ Store the string starting address in CHAR_PTR
 	MOV R3, #MESSAGE_LEN	@ Load the original number of characters in string again
-	LDRB R3, [R2]		@ Write that length to CHAR_COUNT
+	STR R3, [R2]		@ Write that length to CHAR_COUNT
+
 	LDR R0, =MCR		@ Load address of MCR
-	LDR R1, [R0]		@ Read current value of MCR
-	BIC R1, R1, #0x08	@ Clear bit 3 to disable UART interrupts
+	LDRB R1, [R0]		@ Read current value of MCR
+	BIC R1, #0x08		@ Clear bit 3 to disable UART interrupts
 	STRB R1, [R0]		@ Write resulting value with cleared bit 3 back to MCR
 
 @------------------------------------@
