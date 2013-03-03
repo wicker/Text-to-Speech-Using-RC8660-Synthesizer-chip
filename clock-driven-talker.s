@@ -33,6 +33,8 @@ _start:
 .EQU BIT10,  0x00000400   @ Value to clear or set bit 10
 .EQU BIT14,  0x00004000   @ Value to clear or set bit 14
 .EQU BIT20,  0x00100000   @ Value to clear or set bit 20
+.EQU B1031,  0x80000400   @ Value to clear or set bits 10 and 31
+.EQU BIT31,  0x80000000   @ Value to clear or set bit 31
 
 .EQU ICIP,   0x40D00000  @ Interrupt Controller IRQ Pending Register
 .EQU ICMR,   0x40D00004  @ Interrupt Controller Mask Register
@@ -57,22 +59,21 @@ _start:
 .EQU MSR,     0x1080000C  @ Modem Status Register
 .EQU SPR,     0x1080000E  @ Scratch Pad Register
 
-@-------------------------------------------@
-@ Set GPIO 73 back to Alternate Function 00 @
-@-------------------------------------------@
+.EQU OSCC,    0x41300008  @ Oscillation Configuration Register
+.EQU RTSR,    0x40900008  @ RTC Status Register
+
+@-------------------------------------------------------@
+@ Initialize GPIO 73 as an input and rising edge detect @
+@-------------------------------------------------------@
 
 LDR R0, =GAFR2L @ Load pointer to GAFR2_L register
 LDR R1, [R0]    @ Read GAFR2_L to get current value
 BIC R1, #CAFRL  @ Clear bits 19 and 20 to make GPIO 73 not an alternate function
 STR R1, [R0]    @ Write word back to the GAFR2_L
 
-@-------------------------------------------------------@
-@ Initialize GPIO 73 as an input and rising edge detect @
-@-------------------------------------------------------@
-
 LDR R0, =GPCR2	@ Point to GPCR2 register
 LDR R1, [R0]    @ Read current value of GPCR2 register
-ORR R1, #BIT9	@ Word to clear bit 9, sign off when output
+ORR R1, #BIT9	@ Word to clear bit 9 to output a low on GPIO 73
 STR R1, [R0]	@ Write to GPCR2
 
 LDR R0, =GPDR2	@ Point to GPDR2 register
@@ -82,16 +83,16 @@ STR R1, [R0]	@ Write word back to the GPDR2
 
 LDR R0, =GRER2	@ Point to GRER2 register
 LDR R1, [R0]	@ Read current value of GRER2 register
-ORR R1, #BIT9   @ Load mask to set bit 9
+ORR R1, #BIT9   @ Set bit 9 to enable GPIO 73 for rising edge detect
 STR R1, [R0]	@ Write word back to GRER2 register
 
-@----------------------------------------------------------@
-@ Initialize GPIO 10 as a rising edge detect for COM2 UART @
-@----------------------------------------------------------@
+@--------------------------------------------------------@
+@ Initialize GPIO 10 (COM2 UART) as a rising edge detect @
+@--------------------------------------------------------@
 
 LDR R0, =GRER0	@ Point to GRER0 register
 LDR R1, [R0]	@ Read GRER0 register
-ORR R1, #BIT10	@ Set bit 10 to enable GPIO10 for rising edge detect
+ORR R1, #BIT10	@ Set bit 10 (UART) for GPIO rising edge detect
 STR R1, [R0]	@ Write back to GRER0
 
 @-----------------@
@@ -136,9 +137,21 @@ STR R2, BTLDR_IRQ_ADDRESS	@ Save BTLDR IRQ address for use in IRQ_DIRECTOR
 LDR R3, =IRQ_DIRECTOR		@ Load absolute address of our interrupt director
 STR R3, [R1]	@ Store this address literal pool
 
-@---------------------------------------------------------------@
-@ Initialize interrupt controller for button and UART on IP<10> @
-@---------------------------------------------------------------@
+@--------------------------------------------------------------------------------@
+@ Set the oscillator controller to use 32.768 kHz and enable RTC alarm interrupt @
+@--------------------------------------------------------------------------------@
+
+LDR R0, =OSCC   @ Pointer to oscillation configuration register
+MOV R1, #0x08   @ Set bit 3 to enable output at processor speed (13MHz)
+STRB R1, [R0]   @ Write byte back to OSCC
+
+LDR R0, =RTSR   @ Pointer to RTC status register
+MOV R1, #0x04   @ Set bit 2 to enable alarm interrupt
+STRB R1, [R0]   @ Write byte back to RTSR
+
+@---------------------------------------------------------------------------------@
+@ Initialize interrupt controller for button and UART on IP<10> and RTC on IP<31> @
+@---------------------------------------------------------------------------------@
 
 LDR R0, =ICCR	@ Load pointer to address of ICCR register
 LDR R1, [R0]	@ Read current value of ICCR
@@ -191,9 +204,14 @@ IRQ_DIRECTOR:
 	TST R1, #BIT10	@ Check for UART interrupt on bit 10
 	BNE TLKR_SVC	@ Yes, go send character
 
+	LDR R0, =GEDR0	@ Load address of GEDR0 register
+	LDR R1, [R0]	@ Read GEDR0 register address to check if GPIO10 
+	TST R1, #BIT31	@ Check for RTC interrupt on bit 31
+	BNE RTC_SVC	@ Yes, go send character
+
 	LDR R0, =GEDR2	@ Load GEDR2 register address to check if GPIO73 asserted
 	LDR R1, [R0]	@ Read GEDR2 register value
-	TST R1, #BIT9	@ Check if bit 9 in GEDR2 = 1
+	TST R1, #BIT9	@ Check for button interupt on bit 9
 	BNE BTN_SVC	@ Yes, must be button press, go service the button
 			@ No, must be other GPIO 119:2 IRQ, pass on: 
 
