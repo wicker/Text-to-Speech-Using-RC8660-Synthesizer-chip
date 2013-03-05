@@ -36,6 +36,9 @@ _start:
 .EQU B1031,  0x80000400   @ Value to clear or set bits 10 and 31
 .EQU BIT31,  0x80000000   @ Value to clear or set bit 31
 
+.EQU SIXTY,  0x0000003C   @ Value to set a decimal value of sixty
+.EQU ZERO,   0x00000000   @ Value to set zero
+
 .EQU ICIP,   0x40D00000  @ Interrupt Controller IRQ Pending Register
 .EQU ICMR,   0x40D00004  @ Interrupt Controller Mask Register
 .EQU ICPR,   0x40D00010  @ Interrupt Controller Pending Register
@@ -145,9 +148,9 @@ LDR R0, =OSCC   @ Pointer to oscillation configuration register
 MOV R1, #0x08   @ Set bit 3 to enable output at processor speed (13MHz)
 STRB R1, [R0]   @ Write byte back to OSCC
 
-LDR R0, =RTSR   @ Pointer to RTC status register
-MOV R1, #0x04   @ Set bit 2 to enable alarm interrupt
-STRB R1, [R0]   @ Write byte back to RTSR
+LDR R0, =RTAR   @ Pointer to RTC alarm register
+MOV R1, #SIXTY  @ Write the hex value of decimal sixty to the alarm register
+STRB R1, [R0]   @ Write byte back to RTAR
 
 @---------------------------------------------------------------------------------@
 @ Initialize interrupt controller for button and UART on IP<10> and RTC on IP<31> @
@@ -160,7 +163,7 @@ STR R0, [R1] 	@ Write word back to ICMR register
 
 LDR R0, =ICMR	@ Load pointer to address of ICMR register
 LDR R1, [R0]	@ Read current value of ICMR
-ORR R1, #BIT10	@ Set bit 10 to unmask IM10
+ORR R1, #B1031	@ Set bits 10 and 31 to unmask IP10 and IP31
 STR R0, [R1] 	@ Write word back to ICMR register
 
 LDR R0, =ICLR	@ Load pointer to address of ICMR register
@@ -197,17 +200,20 @@ IRQ_DIRECTOR:
 	LDR R0, =ICIP	@ Point at IRQ Pending Register (ICIP)
 	LDR R1, [R0]	@ Read ICIP
 	TST R1, #BIT10	@ Check if GPIO 119:2 IRQ interrupt on IP<10> asserted
-	BEQ PASSON	@ No, must be other IRQ, pass on to system program
+        BNE GPIO_SVC    @ Yes, go service the button.
+	TST R1, #BIT31  @ Check for the RTC interrupt on IP<31>
+	BEQ PASSON	@ No, must be other system or GPIO IRQ, pass on
+	B RTC_SVC	@ Yes, go service the RTC interrupt
 
+@----------------------------------------------------------------@
+@ GPIO_SVC - The GPIO interrupt is either the button or the UART @
+@----------------------------------------------------------------@
+
+GPIO_SVC:
 	LDR R0, =GEDR0	@ Load address of GEDR0 register
 	LDR R1, [R0]	@ Read GEDR0 register address to check if GPIO10 
 	TST R1, #BIT10	@ Check for UART interrupt on bit 10
 	BNE TLKR_SVC	@ Yes, go send character
-
-	LDR R0, =GEDR0	@ Load address of GEDR0 register
-	LDR R1, [R0]	@ Read GEDR0 register address to check if GPIO10 
-	TST R1, #BIT31	@ Check for RTC interrupt on bit 31
-	BNE RTC_SVC	@ Yes, go send character
 
 	LDR R0, =GEDR2	@ Load GEDR2 register address to check if GPIO73 asserted
 	LDR R1, [R0]	@ Read GEDR2 register value
@@ -228,10 +234,32 @@ PASSON:
 @-------------------------------------------------------------@
 
 BTN_SVC:
-	LDR R0, =GEDR2		@ Point to GEDR2 
-	LDR R1, [R0]		@ Read the current value from GEDR2
-	ORR R1, #BIT9		@ Set bit 9 to clear the interrupt from pin 73
-	STR R1, [R0]		@ Write to GEDR2
+	LDR R0, =GEDR2	@ Point to GEDR2 
+	LDR R1, [R0]	@ Read the current value from GEDR2
+	ORR R1, #BIT9	@ Set bit 9 to clear the interrupt from pin 73
+	STR R1, [R0]	@ Write to GEDR2
+
+        LDR R0, =RTSR   @ Pointer to RTC status register
+	MOV R1, #BIT2   @ Set bit 2 to enable alarm interrupt
+	STRB R1, [R0]   @ Write byte back to RTSR
+
+	LDR R0, =RCNR   @ Pointer to the RTC counter register
+	MOV R1, #ZERO   @ Reset the counter to zero
+        STR R1, [R0]    @ Write word back to RCNR
+
+@-------------------------------------------------------------------------@
+@ RTC_SVC - The interrupt came from the RTC alarm signaling sixty seconds @
+@-------------------------------------------------------------------------@
+
+RTC_SVC:
+
+        LDR R0, =RTSR   @ Point to RTC status register
+	MOV R1, #BIT0   @ Set bit 0 to one to clear the alarm
+	STR R1, [R0]    @ Write to RTSR
+
+	LDR R0, =RCNR   @ Pointer to the RTC counter register
+	MOV R1, #ZERO   @ Reset the counter to zero
+        STR R1, [R0]    @ Write word back to RCNR
 
         @@ Enable Tx interrupt and enable modem status change interrupt
 	LDR R0, =IER	        @ Pointer to interrupt enable register (IER)
@@ -261,7 +289,6 @@ TLKR_SVC:
 	LDR R1, [R0]	   @ Read LSR
         TST R1, #BIT6	   @ Check if THR-ready is asserted
 	BEQ GOBCK	   @ If no, exit and wait for THR-ready
-
 	B SEND		   @ If yes, both are asserted, send character
 
 @--------------------------------------------------@
