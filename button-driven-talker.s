@@ -150,10 +150,10 @@ LDR R1, [R0]	@ Read current value of ICMR
 ORR R1, #BIT10	@ Set bit 10 to unmask IM10
 STR R0, [R1] 	@ Write word back to ICMR register
 
-LDR R0, =ICLR	@ Load pointer to address of ICMR register
-LDR R1, [R0]	@ Read current value of ICMR
+LDR R0, =ICLR	@ Load pointer to address of ICLR register
+LDR R1, [R0]	@ Read current value of ICLR
 ORR R1, #0x00	@ Set all bits to 0 to only trigger an IRQ
-STR R0, [R1] 	@ Write word back to ICMR register
+STR R0, [R1] 	@ Write word back to ICLR register
 
 @------------------------------------------------------------------------@
 @ Make sure IRQ interrupt on processor enabled by clearing bit 7 in CPSR @
@@ -243,7 +243,6 @@ TLKR_SVC:
 	LDR R1, [R0]	   @ Read LSR
         TST R1, #BIT6	   @ Check if THR-ready is asserted
 	BEQ GOBCK	   @ If no, exit and wait for THR-ready
-
 	B SEND		   @ If yes, both are asserted, send character
 
 @--------------------------------------------------@
