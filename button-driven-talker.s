@@ -311,21 +311,21 @@ GOBCK:
 
 BTLDR_IRQ_ADDRESS: .word 0
 
-.EQU MESSAGE_LEN, 24
+.EQU MESSAGE_LEN, 22
 
 .data
 
 .align 4
 
 MESSAGE: 
-	.byte 0x0D
-	.ascii "Hello"
-	.byte 0x0D
+	.word 0x0D
+	.ascii "Take me to your leader"
+	.word 0x0D
 
 .align 4
 
 CHAR_COUNT: 
-	.word 24
+	.word 22
 
 .align 4
 
