@@ -316,9 +316,7 @@ MESSAGE:
 	.ascii "Take me to your leader"
 	.word 0x0D
 
-MESSAGE_LEN:
-	.byte 24
-@	.word 24
+.EQU MESSAGE_LEN, 24
 
 CHAR_PTR: 
 	.word MESSAGE
