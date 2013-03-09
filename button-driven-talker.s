@@ -243,8 +243,8 @@ TLKR_SVC:
 	LDR R0, =LSR	   @ Point to LSR
 	LDR R1, [R0]	   @ Read LSR
         TST R1, #BIT5	   @ Check if THR-ready is asserted
-	BEQ GOBCK	   @ If no, exit and wait for THR-ready
-	B SEND		   @ If yes, both are asserted, send character
+	BNE SEND	   @ If yes, both are asserted, send character
+	B GOBCK		   @ If no, exit and wait for THR-ready
 
 @--------------------------------------------------@
 @ NOCTS - The interrupt did not come from CTS# low @
@@ -330,3 +330,5 @@ CHAR_PTR:
 
 CHAR_COUNT: 
 	.word 24
+
+.end
