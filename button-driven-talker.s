@@ -140,20 +140,20 @@ STR R3, [R1]	@ Store this address literal pool
 @ Initialize interrupt controller for button and UART on IP<10> @
 @---------------------------------------------------------------@
 
-LDR R0, =ICCR	@ Load pointer to address of ICCR register
-LDR R1, [R0]	@ Read current value of ICCR
-ORR R1, #BIT0	@ Set bit 0 (DIM bit) to only allow unmasked interrupts
-STR R0, [R1] 	@ Write word back to ICMR register
+@LDR R0, =ICCR	@ Load pointer to address of ICCR register
+@LDR R1, [R0]	@ Read current value of ICCR
+@ORR R1, #BIT0	@ Set bit 0 (DIM bit) to only allow unmasked interrupts
+@STR R0, [R1] 	@ Write word back to ICMR register
 
 LDR R0, =ICMR	@ Load pointer to address of ICMR register
 LDR R1, [R0]	@ Read current value of ICMR
 ORR R1, #BIT10	@ Set bit 10 to unmask IM10
 STR R0, [R1] 	@ Write word back to ICMR register
 
-LDR R0, =ICLR	@ Load pointer to address of ICLR register
-LDR R1, [R0]	@ Read current value of ICLR
-ORR R1, #0x00	@ Set all bits to 0 to only trigger an IRQ
-STR R0, [R1] 	@ Write word back to ICLR register
+@LDR R0, =ICLR	@ Load pointer to address of ICLR register
+@LDR R1, [R0]	@ Read current value of ICLR
+@ORR R1, #0x00	@ Set all bits to 0 to only trigger an IRQ
+@STR R0, [R1] 	@ Write word back to ICLR register
 
 @------------------------------------------------------------------------@
 @ Make sure IRQ interrupt on processor enabled by clearing bit 7 in CPSR @
