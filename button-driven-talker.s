@@ -318,9 +318,9 @@ BTLDR_IRQ_ADDRESS: .word 0
 .align 4
 
 MESSAGE: 
-	.word 0x0D
+	.byte 0x0D
 	.ascii "Take me to your leader"
-	.word 0x0D
+	.byte 0x0D
 
 .align 4
 
