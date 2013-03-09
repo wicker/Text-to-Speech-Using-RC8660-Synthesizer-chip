@@ -272,9 +272,9 @@ SEND:
 	MOV R1, #0x0A	@ Bit 3 = modem status interrupt, bit 1 = Tx int enable
 	STRB R1, [R0]	@ Write to IER
 
-	LDRW R0, =CHAR_PTR	@ Load address of char pointer
-	LDRW R1, [R0]		@ Load address of desired char in text string
-	LDRW R2, =CHAR_COUNT	@ Load address of count store location
+	LDR R0, =CHAR_PTR	@ Load address of char pointer
+	LDR R1, [R0]		@ Load address of desired char in text string
+	LDR R2, =CHAR_COUNT	@ Load address of count store location
 	LDRB R3, [R2]		@ Get current char count value
 	LDRB R4, [R1], #1	@ Load char from string, increment char pointer
 	STRB R1, [R0]		@ Put incremented char address into CHAR_PTR for next time
@@ -311,12 +311,6 @@ GOBCK:
 
 BTLDR_IRQ_ADDRESS: .word 0
 
-@ ============================================================================== @
-@ Define the data section                                                        @
-@ ============================================================================== @
-
-.data
-
 MESSAGE: 
 	.word 0x0D
 	.ascii "Take me to your leader"
@@ -330,5 +324,11 @@ CHAR_PTR:
 
 CHAR_COUNT: 
 	.word 24
+
+@ ============================================================================== @
+@ Define the data section                                                        @
+@ ============================================================================== @
+
+.data
 
 .end
