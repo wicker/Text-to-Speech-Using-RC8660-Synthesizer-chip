@@ -318,9 +318,10 @@ BTLDR_IRQ_ADDRESS: .word 0
 .align 4
 
 MESSAGE: 
-	.word 0x0D
+	.word 0x01	@ Command character
+	.ascii "10H"	@ Set baud rate at 115200
 	.ascii "Take me to your leader"
-	.word 0x0D
+	.word 0x0D	@ So the RC8660 will begin to speak
 
 .align 4
 
