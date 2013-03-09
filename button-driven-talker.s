@@ -27,6 +27,7 @@ _start:
 
 .EQU BIT0,   0x00000001   @ Value to clear or set bit 0
 .EQU BIT4,   0x00000010   @ Value to clear or set bit 4
+.EQU BIT5,   0x00000020   @ Value to clear or set bit 5
 .EQU BIT6,   0x00000040   @ Value to clear or set bit 6
 .EQU BIT7,   0x00000080   @ Value to clear or set bit 7
 .EQU BIT9,   0x00000200   @ Value to clear or set bit 9
@@ -241,7 +242,7 @@ TLKR_SVC:
 
 	LDR R0, =LSR	   @ Point to LSR
 	LDR R1, [R0]	   @ Read LSR
-        TST R1, #BIT6	   @ Check if THR-ready is asserted
+        TST R1, #BIT5	   @ Check if THR-ready is asserted
 	BEQ GOBCK	   @ If no, exit and wait for THR-ready
 	B SEND		   @ If yes, both are asserted, send character
 
