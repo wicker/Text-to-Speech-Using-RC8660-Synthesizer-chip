@@ -236,12 +236,12 @@ TLKR_SVC:
 	STMFD SP!,{R2-R5}  @ Save additional registers
 
 	LDR R0, =MSR	   @ Point to MSR
-	LDR R1, [R0]	   @ Read MSR, resets MSR change interrupt bits
+	LDRB R1, [R0]	   @ Read MSR, resets MSR change interrupt bits
 	TST R1, #BIT4	   @ Check if the CTS# is currently asserted (MSR bit 4)
 	BEQ NOCTS	   @ If not, go check for THR status
 
 	LDR R0, =LSR	   @ Point to LSR
-	LDR R1, [R0]	   @ Read LSR
+	LDRB R1, [R0]	   @ Read LSR
         TST R1, #BIT5	   @ Check if THR-ready is asserted
 	BNE SEND	   @ If yes, both are asserted, send character
 	B GOBCK		   @ If no, exit and wait for THR-ready
@@ -252,7 +252,7 @@ TLKR_SVC:
 
 NOCTS:
 	LDR R0, =LSR	@ Point to LSR
-	LDR R1, [R0]	@ Read LSR (does not clear interrupt)
+	LDRB R1, [R0]	@ Read LSR (does not clear interrupt)
 	TST R1, #0x20	@ Check if THR-ready is asserted
 	BEQ GOBCK	@ Neither CTS# or THR are asserted, must be other source
 			@ Else no CTS# but THR asserted, disable interrupt on THR
@@ -260,7 +260,7 @@ NOCTS:
 
 	LDR R0, =IER	@ Load IER
 	MOV R1, #0x08	@ Disable bit 1 = Tx interrupt enable (Mask THR)
-	STR R1, [R0]	@ Write to IER
+	STRB R1, [R0]	@ Write to IER
 	B GOBCK		@ Exit to wait for CTS# interrupt
 		
 @----------------------------------------------------------------@
@@ -270,7 +270,7 @@ NOCTS:
 SEND:
 	LDR R0, =IER	@ Load pointer to IER
 	MOV R1, #0x0A	@ Bit 3 = modem status interrupt, bit 1 = Tx int enable
-	LDR R1, [R0]	@ Write to IER
+	STRB R1, [R0]	@ Write to IER
 
 	LDR R0, =CHAR_PTR	@ Load address of char pointer
 	LDR R1, [R0]		@ Load address of desired char in text string
@@ -280,7 +280,7 @@ SEND:
 	STR R1, [R0]		@ Put incremented char address into CHAR_PTR for next time
 
 	LDR R5, =THR		@ Point at UART THR
-	STR R4, [R5]		@ Write char to THR, which clears interrupt source for now
+	STRB R4, [R5]		@ Write char to THR, which clears interrupt source for now
 	SUBS R3, R3, #1		@ Decrement char counter by 1
 	STR R3, [R2]		@ Store char value counter back in memory
 	TST R2, #0x00		@ Test char counter value
