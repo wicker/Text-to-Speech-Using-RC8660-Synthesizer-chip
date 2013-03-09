@@ -288,7 +288,7 @@ SEND:
 
 	LDR R3, =MESSAGE	@ If not, reload the message. Get address of start string.
 	STR R3, [R0]		@ Store the string starting address in CHAR_PTR
-	MOV R3, MESSAGE_LEN	@ Load the original number of characters in string again
+	MOV R3, #MESSAGE_LEN	@ Load the original number of characters in string again
 	STR R3, [R2]		@ Write that length to CHAR_COUNT
 
 	LDR R0, =MCR		@ Load address of MCR
