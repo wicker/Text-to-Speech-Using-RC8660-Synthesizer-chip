@@ -319,7 +319,7 @@ BTLDR_IRQ_ADDRESS: .word 0
 
 MESSAGE: 
 	.byte 0x0D
-	.ascii "Take me to your leader"
+	.ascii "Hello"
 	.byte 0x0D
 
 .align 4
