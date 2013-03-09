@@ -311,19 +311,26 @@ GOBCK:
 
 BTLDR_IRQ_ADDRESS: .word 0
 
+.EQU MESSAGE_LEN, 24
+
 .data
+
+.align 4
 
 MESSAGE: 
 	.word 0x0D
 	.ascii "Take me to your leader"
 	.word 0x0D
 
-.EQU MESSAGE_LEN, 24
-
-.EQU CHAR_PTR, MESSAGE
+.align 4
 
 CHAR_COUNT: 
 	.word 24
+
+.align 4
+
+CHAR_PTR:
+	.word MESSAGE
 
 @ ============================================================================== @
 @ Define the data section                                                        @
