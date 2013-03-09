@@ -261,7 +261,6 @@ RTC_SVC:
 	MOV R1, #ZERO   @ Reset the counter to zero
         STR R1, [R0]    @ Write word back to RCNR
 
-        @@ Enable Tx interrupt and enable modem status change interrupt
 	LDR R0, =IER	        @ Pointer to interrupt enable register (IER)
 	MOV R1, #0x0A	        @ Bit 3 = modem status int, bit 1 = Tx enable
 	STRB R1, [R0]	        @ Write to IER
