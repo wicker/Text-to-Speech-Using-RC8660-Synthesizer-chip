@@ -284,7 +284,7 @@ SEND:
 	SUBS R3, R3, #1		@ Decrement char counter by 1
 	STRB R3, [R2]		@ Store char value counter back in memory
 	TST R2, #0x00		@ Test char counter value
-	BNE GOBCK		@ If greater than zero, go get more characters
+	BEQ GOBCK		@ If greater than zero, go get more characters
 
 	LDR R3, =MESSAGE	@ If not, reload the message. Get address of start string.
 	STR R3, [R0]		@ Store the string starting address in CHAR_PTR
