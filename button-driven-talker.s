@@ -324,7 +324,10 @@ MESSAGE:
 CHAR_COUNT: 
 	.word 7
 
-.EQU MESSAGE_LEN, 7
+.align 4
+
+MESSAGE_LEN:
+	.word 7
 
 
 .align 4
