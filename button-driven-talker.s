@@ -235,6 +235,11 @@ BTN_SVC:
 TLKR_SVC:
 	STMFD SP!,{R2-R5}  @ Save additional registers
 
+	LDR R0, =GEDR0		@ Point to GEDR0
+	LDR R1, [R0]		@ Read the current value from GEDR0
+	ORR R1, #BIT10		@ Set bit 10 to clear the interrupt from UART
+	STR R1, [R0]		@ Write to GEDR0
+
 	LDR R0, =MSR	   @ Point to MSR
 	LDRB R1, [R0]	   @ Read MSR, resets MSR change interrupt bits
 	TST R1, #BIT4	   @ Check if the CTS# is currently asserted (MSR bit 4)
@@ -284,7 +289,7 @@ SEND:
 	SUBS R3, R3, #1		@ Decrement char counter by 1
 	STRB R3, [R2]		@ Store char value counter back in memory
 	TST R2, #0x00		@ Test char counter value
-	BEQ GOBCK		@ If greater than zero, go get more characters
+	BNE GOBCK		@ If greater than zero, go get more characters
 
 	LDR R3, =MESSAGE	@ If not, reload the message. Get address of start string.
 	STR R3, [R0]		@ Store the string starting address in CHAR_PTR
