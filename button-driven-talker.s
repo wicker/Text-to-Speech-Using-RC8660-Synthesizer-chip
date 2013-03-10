@@ -278,7 +278,7 @@ SEND:
 	STRB R4, [R5]		@ Write char to THR, which clears interrupt source for now
 	SUBS R3, R3, #1		@ Decrement char counter by 1
 	STRB R3, [R2]		@ Store char value counter back in memory
-	CMP R2, #0x00		@ Test char counter value
+	CMP R3, #0x00		@ Test char counter value
 	BNE GOBCK		@ If greater than zero, go get more characters
 
 	LDR R3, =MESSAGE	@ If not, reload the message. Get address of start string.
