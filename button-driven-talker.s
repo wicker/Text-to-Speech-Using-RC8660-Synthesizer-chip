@@ -177,16 +177,17 @@ IRQ_DIRECTOR:
 	TST R1, #BIT10	@ Check if GPIO 119:2 IRQ interrupt on IP<10> asserted
 	BEQ PASSON	@ No, must be other IRQ, pass on to system program
 
-	LDR R0, =GEDR0	@ Load address of GEDR0 register
-	LDR R1, [R0]	@ Read GEDR0 register address to check if GPIO10 
-	TST R1, #BIT10	@ Check for UART interrupt on bit 10
-	BNE TLKR_SVC	@ Yes, go send character
-
 	LDR R0, =GEDR2	@ Load GEDR2 register address to check if GPIO73 asserted
 	LDR R1, [R0]	@ Read GEDR2 register value
 	TST R1, #BIT9	@ Check if bit 9 in GEDR2 = 1
 	BNE BTN_SVC	@ Yes, must be button press, go service the button
 			@ No, must be other GPIO 119:2 IRQ, pass on: 
+
+	LDR R0, =GEDR0	@ Load address of GEDR0 register
+	LDR R1, [R0]	@ Read GEDR0 register address to check if GPIO10 
+	TST R1, #BIT10	@ Check for UART interrupt on bit 10
+	BNE TLKR_SVC	@ Yes, go send character
+
 
 @-----------------------------------------------------------@
 @ PASSON - The interrupt is not from our button or the UART @
