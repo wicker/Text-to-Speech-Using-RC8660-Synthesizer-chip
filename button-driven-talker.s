@@ -211,10 +211,6 @@ BTN_SVC:
 	MOV R1, #0x0A	        @ Bit 3 = modem status int, bit 1 = Tx enable
 	STRB R1, [R0]	        @ Write to IER
 
-	LDR R0, =MCR		@ Point to MCR to enable UART interrupt and assert #CTS
-	MOV R1, #0x0A		@ Enable UART interrupt
-	STRB R1, [R0]		@ Write back to MCR
-
 	LDMFD SP!, {R0-R1,LR}	@ Restore registers, including return address
 	SUBS PC, LR, #4		@ Return from interrupt to wait loop
 
@@ -285,11 +281,6 @@ SEND:
 	STR R3, [R0]		@ Store the string starting address in CHAR_PTR
 	MOV R3, #MESSAGE_LEN	@ Load the original number of characters in string again
 	STR R3, [R2]		@ Write that length to CHAR_COUNT
-
-	LDR R0, =MCR	@ Load address of MCR
-	LDRB R1, [R0]	@ Read current value of MCR
-	BIC R1, #0x08 	@ Clear bit 3 to disable UART interrupts
-	STRB R1, [R0]	@ Write resulting value with cleared bit 3 back to MCR
 
 	LDR R0, =IER	        @ Pointer to interrupt enable register (IER)
 	MOV R1, #0x00	        @ Bit 3 = modem status int, bit 1 = Tx enable
