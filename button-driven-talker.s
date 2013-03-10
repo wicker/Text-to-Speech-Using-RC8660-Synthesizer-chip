@@ -311,22 +311,22 @@ GOBCK:
 
 BTLDR_IRQ_ADDRESS: .word 0
 
-.EQU MESSAGE_LEN, 22
-
 .data
 
 .align 4
 
 MESSAGE: 
-	.word 0x01	@ Command character
-	.ascii "10H"	@ Set baud rate at 115200
-	.ascii "Take me to your leader"
-	.word 0x0D	@ So the RC8660 will begin to speak
+	.byte 0x0D	@ So the RC8660 will begin to speak
+	.ascii "Hello"
+	.byte 0x0D	@ So the RC8660 will begin to speak
 
 .align 4
 
 CHAR_COUNT: 
-	.word 22
+	.word 7
+
+.EQU MESSAGE_LEN, 7
+
 
 .align 4
 
@@ -338,3 +338,10 @@ CHAR_PTR:
 @ ============================================================================== @
 
 .end
+
+
+
+	.word 0x01	@ Command character
+	.word 0x0A48	@ Set baud rate at 115200
+			@ 10 = 0xA (10) 0x48 (H)
+
