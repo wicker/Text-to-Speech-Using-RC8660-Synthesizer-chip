@@ -286,6 +286,11 @@ SEND:
 	MOV R3, #MESSAGE_LEN	@ Load the original number of characters in string again
 	STR R3, [R2]		@ Write that length to CHAR_COUNT
 
+	LDR R0, =MCR	@ Load address of MCR
+	LDRB R1, [R0]	@ Read current value of MCR
+	BIC R1, #0x08 	@ Clear bit 3 to disable UART interrupts
+	STRB R1, [R0]	@ Write resulting value with cleared bit 3 back to MCR
+
 	LDR R0, =IER	        @ Pointer to interrupt enable register (IER)
 	MOV R1, #0x00	        @ Bit 3 = modem status int, bit 1 = Tx enable
 	STRB R1, [R0]	        @ Write to IER
