@@ -26,6 +26,7 @@ _start:
 .EQU CAFRL,  0x000C0000   @ Value to clear or set bits 19 and 20
 
 .EQU BIT0,   0x00000001   @ Value to clear or set bit 0
+.EQU BIT2,   0x00000004   @ Value to clear or set bit 2
 .EQU BIT4,   0x00000010   @ Value to clear or set bit 4
 .EQU BIT6,   0x00000040   @ Value to clear or set bit 6
 .EQU BIT7,   0x00000080   @ Value to clear or set bit 7
