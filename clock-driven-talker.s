@@ -155,21 +155,11 @@ STRB R1, [R0]   @ Write byte back to RTAR
 @ Initialize interrupt controller for button and UART on IP<10> and RTC on IP<31> @
 @---------------------------------------------------------------------------------@
 
-LDR R0, =ICCR	@ Load pointer to address of ICCR register
-LDR R1, [R0]	@ Read current value of ICCR
-ORR R1, #BIT0	@ Set bit 0 (DIM bit) to only allow unmasked interrupts
-STR R0, [R1] 	@ Write word back to ICMR register
-
 LDR R0, =ICMR	@ Load pointer to address of ICMR register
 LDR R1, [R0]	@ Read current value of ICMR
 MOVW R2, #0400  @ Load lower sixteen bits of mask 
 MOVT R2, #8000  @ Load upper sixteen bits of mask
 ORR R1, R2	@ Set bits 10 and 31 to unmask IP10 and IP31
-STR R0, [R1] 	@ Write word back to ICMR register
-
-LDR R0, =ICLR	@ Load pointer to address of ICMR register
-LDR R1, [R0]	@ Read current value of ICMR
-ORR R1, #0x00	@ Set all bits to 0 to only trigger an IRQ
 STR R0, [R1] 	@ Write word back to ICMR register
 
 @------------------------------------------------------------------------@
