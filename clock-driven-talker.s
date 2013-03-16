@@ -37,7 +37,6 @@ _start:
 .EQU B1031,  0x80000400   @ Value to clear or set bits 10 and 31
 .EQU BIT31,  0x80000000   @ Value to clear or set bit 31
 
-.EQU FIVE,   0x00000101   @ Value to set a decimal value of five
 .EQU SIXTY,  0x0000003C   @ Value to set a decimal value of sixty
 .EQU ZERO,   0x00000000   @ Value to set zero
 
@@ -150,7 +149,7 @@ STRB R1, [R0]   @ Write byte back to OSCC
 
 LDR R0, =RTAR   @ Pointer to RTC alarm register
 @MOV R1, #SIXTY  @ Write the hex value of decimal sixty to the alarm register
-MOV R1, #FIVE  @ Write the hex value of decimal five to the alarm register
+MOV R1, #0x5  @ Write the hex value of decimal five to the alarm register
 STRB R1, [R0]   @ Write byte back to RTAR
 
 @---------------------------------------------------------------------------------@
