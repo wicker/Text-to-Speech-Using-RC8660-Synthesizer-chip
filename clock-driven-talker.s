@@ -238,6 +238,8 @@ BTN_SVC:
 	MOV R1, #ZERO   @ Reset the counter to zero
         STR R1, [R0]    @ Write word back to RCNR
 
+	B GOBCK		@ Exit to wait for CTS# interrupt
+
 @-------------------------------------------------------------------------@
 @ RTC_SVC - The interrupt came from the RTC alarm signaling sixty seconds @
 @-------------------------------------------------------------------------@
@@ -260,15 +262,17 @@ RTC_SVC:
 	MOV R1, #0x0A		@ Enable UART interrupt
 	STRB R1, [R0]		@ Write back to MCR
 
-	LDMFD SP!, {R0-R1,LR}	@ Restore registers, including return address
-	SUBS PC, LR, #4		@ Return from interrupt to wait loop
+	B GOBCK		@ Exit to wait for CTS# interrupt
 
 @---------------------------------------------------------------------------------@
 @ TLKR_SVC - The interrupt came from the CTS# low or THR empty or other interrupt @
 @---------------------------------------------------------------------------------@
 
 TLKR_SVC:
-	STMFD SP!,{R2-R5}  @ Save additional registers
+        LDR R0, =GEDR0          @ Point to GEDR0
+        LDR R1, [R0]            @ Read the current value from GEDR0
+        ORR R1, #BIT10          @ Set bit 10 to clear the interrupt from UART
+        STR R1, [R0]            @ Write to GEDR0
 
 	LDR R0, =MSR	   @ Point to MSR
 	LDR R1, [R0]	   @ Read MSR, resets MSR change interrupt bits
@@ -303,6 +307,8 @@ NOCTS:
 @----------------------------------------------------------------@
 
 SEND:
+	STMFD SP!,{R2-R5}  @ Save additional registers
+
 	LDR R0, =IER	@ Load pointer to IER
 	MOV R1, #0x0A	@ Bit 3 = modem status interrupt, bit 1 = Tx int enable
 	LDR R1, [R0]	@ Write to IER
@@ -330,13 +336,13 @@ SEND:
 	LDRB R1, [R0]		@ Read current value of MCR
 	BIC R1, #0x08		@ Clear bit 3 to disable UART interrupts
 	STRB R1, [R0]		@ Write resulting value with cleared bit 3 back to MCR
+	LDMFD SP!, {R2-R5}	@ Restore additional registers
 
 @------------------------------------@
 @ GOBCK - Restore from the interrupt @
 @------------------------------------@
 
 GOBCK:
-	LDMFD SP!, {R2-R5}	@ Restore additional registers
 	LDMFD SP!, {R0-R1,LR}	@ Restore original registers, including return address
 	SUBS PC, LR, #4		@ Return from interrupt (to wait loop)
 
