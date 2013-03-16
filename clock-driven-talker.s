@@ -163,7 +163,8 @@ STR R0, [R1] 	@ Write word back to ICMR register
 
 LDR R0, =ICMR	@ Load pointer to address of ICMR register
 LDR R1, [R0]	@ Read current value of ICMR
-ORR R1, #B1031	@ Set bits 10 and 31 to unmask IP10 and IP31
+MOVW R2, #B031  @ Load mask 
+ORR R1, R2	@ Set bits 10 and 31 to unmask IP10 and IP31
 STR R0, [R1] 	@ Write word back to ICMR register
 
 LDR R0, =ICLR	@ Load pointer to address of ICMR register
@@ -199,11 +200,11 @@ IRQ_DIRECTOR:
 	STMFD SP!, {R0-R1, LR}	@ Save registers on stack
 	LDR R0, =ICIP	@ Point at IRQ Pending Register (ICIP)
 	LDR R1, [R0]	@ Read ICIP
+	TST R1, #BIT31  @ Check for the RTC interrupt on IP<31>
+	BNE RTC_SVC	@ Yes, go service the RTC interrupt
 	TST R1, #BIT10	@ Check if GPIO 119:2 IRQ interrupt on IP<10> asserted
         BNE GPIO_SVC    @ Yes, go service the button.
-	TST R1, #BIT31  @ Check for the RTC interrupt on IP<31>
-	BEQ PASSON	@ No, must be other system or GPIO IRQ, pass on
-	B RTC_SVC	@ Yes, go service the RTC interrupt
+	B PASSON	@ No, must be other system or GPIO IRQ, pass on
 
 @----------------------------------------------------------------@
 @ GPIO_SVC - The GPIO interrupt is either the button or the UART @
