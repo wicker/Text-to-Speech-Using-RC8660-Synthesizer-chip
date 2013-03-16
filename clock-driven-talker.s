@@ -157,8 +157,8 @@ STRB R1, [R0]   @ Write byte back to RTAR
 
 LDR R0, =ICMR	@ Load pointer to address of ICMR register
 LDR R1, [R0]	@ Read current value of ICMR
-MOVW R2, #0x00000400
-MOVT R2, #0x80000000
+MOVW R2, #0x0400
+MOVT R2, #0x8000
 ORR R1, R2	@ Set bits 10 and 31 to unmask IP10 and IP31
 STR R0, [R1] 	@ Write word back to ICMR register
 
