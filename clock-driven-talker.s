@@ -46,10 +46,6 @@ _start:
 .EQU ICCR,   0x40D00014  @ Interrupt Controller Control Register
 .EQU ICLR,   0x40D00008  @ Interrupt Controller Level Register
 
-@--------------------------------@
-@ Define UART Register Addresses @
-@--------------------------------@
-
 .EQU RHR,     0x10800000  @ Receive Holding Register
 .EQU THR,     0x10800000  @ Transmit Holding Register
 .EQU DLSB,    0x10800000  @ Divisor LSB 
@@ -65,6 +61,8 @@ _start:
 
 .EQU OSCC,    0x41300008  @ Oscillation Configuration Register
 .EQU RTSR,    0x40900008  @ RTC Status Register
+.EQU RTAR,   0x40900004  @ RTC Alarm Register
+.EQU RCNR,   0x40900000  @ RTC Counter Register
 
 @-------------------------------------------------------@
 @ Initialize GPIO 73 as an input and rising edge detect @
