@@ -220,23 +220,22 @@ BTN_SVC:
 @---------------------------------------------------------------------------------@
 
 TLKR_SVC:
-	STMFD SP!,{R2-R5}  @ Save additional registers
 
-	LDR R0, =GEDR0		@ Point to GEDR0
-	LDR R1, [R0]		@ Read the current value from GEDR0
-	ORR R1, #BIT10		@ Set bit 10 to clear the interrupt from UART
-	STR R1, [R0]		@ Write to GEDR0
+	LDR R0, =GEDR0	@ Point to GEDR0
+	LDR R1, [R0]	@ Read the current value from GEDR0
+	ORR R1, #BIT10	@ Set bit 10 to clear the interrupt from UART
+	STR R1, [R0]	@ Write to GEDR0
 
-	LDR R0, =MSR	   @ Point to MSR
-	LDRB R1, [R0]	   @ Read MSR, resets MSR change interrupt bits
-	TST R1, #BIT4	   @ Check if the CTS# is currently asserted (MSR bit 4)
-	BEQ NOCTS	   @ If not, go check for THR status
+	LDR R0, =MSR	@ Point to MSR
+	LDRB R1, [R0]	@ Read MSR, resets MSR change interrupt bits
+	TST R1, #BIT4	@ Check if the CTS# is currently asserted (MSR bit 4)
+	BEQ NOCTS	@ If not, go check for THR status
 
-	LDR R0, =LSR	   @ Point to LSR
-	LDRB R1, [R0]	   @ Read LSR
-        TST R1, #BIT5	   @ Check if THR-ready is asserted
-	BNE SEND	   @ If yes, both are asserted, send character
-	B GOBCK		   @ If no, exit and wait for THR-ready
+	LDR R0, =LSR	@ Point to LSR
+	LDRB R1, [R0]	@ Read LSR
+        TST R1, #BIT5	@ Check if THR-ready is asserted
+	BNE SEND	@ If yes, both are asserted, send character
+	B GOBCK		@ If no, exit and wait for THR-ready
 
 @--------------------------------------------------@
 @ NOCTS - The interrupt did not come from CTS# low @
@@ -260,6 +259,7 @@ NOCTS:
 @----------------------------------------------------------------@
 
 SEND:
+	STMFD SP!,{R2-R5}  @ Save additional registers
 	LDR R0, =IER	@ Load pointer to IER
 	MOV R1, #0x0A	@ Bit 3 = modem status interrupt, bit 1 = Tx int enable
 	STRB R1, [R0]	@ Write to IER
@@ -286,13 +286,14 @@ SEND:
 	LDR R0, =IER	        @ Pointer to interrupt enable register (IER)
 	MOV R1, #0x00	        @ Bit 3 = modem status int, bit 1 = Tx enable
 	STRB R1, [R0]	        @ Write to IER
+	LDMFD SP!, {R2-R5}	@ Restore additional registers
+	B GOBCK
 
 @------------------------------------@
 @ GOBCK - Restore from the interrupt @
 @------------------------------------@
 
 GOBCK:
-	LDMFD SP!, {R2-R5}	@ Restore additional registers
 	LDMFD SP!, {R0-R1,LR}	@ Restore original registers, including return address
 	SUBS PC, LR, #4		@ Return from interrupt (to wait loop)
 
