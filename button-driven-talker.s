@@ -171,7 +171,7 @@ LOOP: 	NOP
 @-----------------------------------------------------------------------------@
 
 IRQ_DIRECTOR:
-	STMFD SP!, {R0-R1, LR}	@ Save registers on stack
+	STMFD SP!, {R0-R5, LR}	@ Save registers on stack
 	LDR R0, =ICIP	@ Point at IRQ Pending Register (ICIP)
 	LDR R1, [R0]	@ Read ICIP
 	TST R1, #BIT10	@ Check if GPIO 119:2 IRQ interrupt on IP<10> asserted
@@ -194,7 +194,7 @@ IRQ_DIRECTOR:
 @-----------------------------------------------------------@
 
 PASSON: 
-	LDMFD SP!, {R0-R1,LR}		@ Restore the registers
+	LDMFD SP!, {R0-R5,LR}		@ Restore the registers
 	LDR PC, =BTLDR_IRQ_ADDRESS	@ Go to bootloader IRQ service procedure
 
 @-------------------------------------------------------------@
@@ -212,7 +212,7 @@ BTN_SVC:
 	MOV R1, #0x0A	        @ Bit 3 = modem status int, bit 1 = Tx enable
 	STRB R1, [R0]	        @ Write to IER
 
-	LDMFD SP!, {R0-R1,LR}	@ Restore registers, including return address
+	LDMFD SP!, {R0-R5,LR}	@ Restore registers, including return address
 	SUBS PC, LR, #4		@ Return from interrupt to wait loop
 
 @---------------------------------------------------------------------------------@
@@ -293,7 +293,7 @@ SEND:
 @------------------------------------@
 
 GOBCK:
-	LDMFD SP!, {R0-R1,LR}	@ Restore original registers, including return address
+	LDMFD SP!, {R0-R5,LR}	@ Restore original registers, including return address
 	SUBS PC, LR, #4		@ Return from interrupt (to wait loop)
 
 @--------------------@
