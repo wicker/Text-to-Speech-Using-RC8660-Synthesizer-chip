@@ -239,7 +239,7 @@ BTN_SVC:
 	MOV R1, #ZERO   @ Reset the counter to zero
         STR R1, [R0]    @ Write word back to RCNR
 
-	B GOBCK		@ Exit to wait for CTS# interrupt
+	B GOBCK		@ Exit to wait for RTC alarm interrupt
 
 @-------------------------------------------------------------------------@
 @ RTC_SVC - The interrupt came from the RTC alarm signaling sixty seconds @
@@ -282,7 +282,7 @@ TLKR_SVC:
 
 	LDR R0, =LSR	   @ Point to LSR
 	LDR R1, [R0]	   @ Read LSR
-        TST R1, #BIT6	   @ Check if THR-ready is asserted
+        TST R1, #0x40	   @ Check if THR-ready is asserted
 	BEQ GOBCK	   @ If no, exit and wait for THR-ready
 	B SEND		   @ If yes, both are asserted, send character
 
