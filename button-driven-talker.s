@@ -285,10 +285,7 @@ SEND:
 	LDR R0, =IER	        @ Pointer to interrupt enable register (IER)
 	MOV R1, #0x00	        @ Bit 3 = modem status int, bit 1 = Tx enable
 	STRB R1, [R0]	        @ Write to IER
-	LDMFD SP!, {R0-R5,LR}		@ Restore the registers
-	LDR PC, =WAIT_LOOP	@ Go to bootloader IRQ service procedure
-	@LDMFD SP!, {R0-R5, LR}	@ Restore all registers
-	@SUBS PC, LR, #4		@ Return from interrupt (to wait loop)
+	B GOBCK			@ 
 
 @------------------------------------@
 @ GOBCK - Restore from the interrupt @
@@ -303,7 +300,6 @@ GOBCK:
 @--------------------@
 
 BTLDR_IRQ_ADDRESS: .word 0
-WAIT_LOOP: .word 0
 
 .data
 
