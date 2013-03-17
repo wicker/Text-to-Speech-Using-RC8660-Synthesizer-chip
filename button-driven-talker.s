@@ -303,7 +303,7 @@ GOBCK:
 @--------------------@
 
 BTLDR_IRQ_ADDRESS: .word 0
-WAIT LOOP: .word 0
+WAIT_LOOP: .word 0
 
 .data
 
