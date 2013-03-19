@@ -258,7 +258,7 @@ NOCTS:
 @----------------------------------------------------------------@
 
 SEND:
-	STMFD SP!,{R2-R5,LR}  @ Save additional registers
+	STMFD SP!,{R2-R5}  @ Save additional registers
 	LDR R0, =IER	@ Load pointer to IER
 	MOV R1, #0x0A	@ Bit 3 = modem status interrupt, bit 1 = Tx int enable
 	STRB R1, [R0]	@ Write to IER
