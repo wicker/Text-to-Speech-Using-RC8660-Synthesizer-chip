@@ -285,8 +285,9 @@ SEND:
 	LDR R0, =IER	        @ Pointer to interrupt enable register (IER)
 	MOV R1, #0x00	        @ Bit 3 = modem status int, bit 1 = Tx enable
 	STRB R1, [R0]	        @ Write to IER
-	B GOBCK			@ 
-	NOP
+
+	LDMFD SP!, {R0-R5,LR}	@ Restore original registers, including return address
+	MOV PC, LR		@ Return from interrupt (to wait loop)
 
 @------------------------------------@
 @ GOBCK - Restore from the interrupt @
@@ -294,7 +295,7 @@ SEND:
 
 GOBCK:
 	LDMFD SP!, {R0-R5,LR}	@ Restore original registers, including return address
-	MOV PC, LR		@ Return from interrupt (to wait loop)
+	SUBS PC, LR, #4		@ Return from interrupt (to wait loop)
 
 @--------------------@
 @ Build literal pool @
