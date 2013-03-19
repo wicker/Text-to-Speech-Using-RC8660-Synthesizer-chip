@@ -201,6 +201,8 @@ PASSON:
 @-------------------------------------------------------------@
 
 BTN_SVC:
+	STMFD SP!, {LR} 	@ Save LR on stack
+
 	LDR R0, =GEDR2		@ Point to GEDR2 
 	LDR R1, [R0]		@ Read the current value from GEDR2
 	ORR R1, #BIT9		@ Set bit 9 to clear the interrupt from pin 73
@@ -211,7 +213,7 @@ BTN_SVC:
 	MOV R1, #0x0A	        @ Bit 3 = modem status int, bit 1 = Tx enable
 	STRB R1, [R0]	        @ Write to IER
 
-	LDMFD SP!, {R0-R5,LR}	@ Restore registers, including return address
+	LDMFD SP!, {LR}		@ Restore registers, including return address
 	SUBS PC, LR, #4		@ Return from interrupt to wait loop
 
 @---------------------------------------------------------------------------------@
@@ -219,6 +221,8 @@ BTN_SVC:
 @---------------------------------------------------------------------------------@
 
 TLKR_SVC:
+	STMFD SP!, {LR}	@ Save LR on stack
+
 	LDR R0, =GEDR0	@ Point to GEDR0
 	LDR R1, [R0]	@ Read the current value from GEDR0
 	ORR R1, #BIT10	@ Set bit 10 to clear the interrupt from UART
@@ -233,13 +237,17 @@ TLKR_SVC:
 	LDRB R1, [R0]	@ Read LSR
         TST R1, #BIT5	@ Check if THR-ready is asserted
 	BNE SEND	@ If yes, both are asserted, send character
-	B GOBCK		@ If no, exit and wait for THR-ready
+
+	LDMFD SP!, {LR}		@ Restore registers, including return address
+	SUBS PC, LR, #4		@ Return from interrupt to wait loop
 
 @--------------------------------------------------@
 @ NOCTS - The interrupt did not come from CTS# low @
 @--------------------------------------------------@
 
 NOCTS:
+	STMFD SP!, {LR}	@ Save LR on stack
+
 	LDR R0, =LSR	@ Point to LSR
 	LDRB R1, [R0]	@ Read LSR (does not clear interrupt)
 	TST R1, #0x20	@ Check if THR-ready is asserted
@@ -250,13 +258,17 @@ NOCTS:
 	LDR R0, =IER	@ Load IER
 	MOV R1, #0x08	@ Disable bit 1 = Tx interrupt enable (Mask THR)
 	STRB R1, [R0]	@ Write to IER
-	B GOBCK		@ Exit to wait for CTS# interrupt
+
+	LDMFD SP!, {LR}		@ Restore registers, including return address
+	SUBS PC, LR, #4		@ Return from interrupt to wait loop
 		
 @----------------------------------------------------------------@
 @ SEND - unmask THR, send the character, test if more characters @
 @----------------------------------------------------------------@
 
 SEND:
+	STMFD SP!, {LR}	@ Save LR on stack
+	
 	LDR R0, =IER	@ Load pointer to IER
 	MOV R1, #0x0A	@ Bit 3 = modem status interrupt, bit 1 = Tx int enable
 	STRB R1, [R0]	@ Write to IER
@@ -290,15 +302,7 @@ SEND:
 	BIC R1, #0x0A		@ Bit 3 = modem status int, bit 1 = Tx enable 
 	STRB R1, [R0]	        @ Write to IER
 
-	LDMFD SP!, {R0-R5,LR}	@ Restore original registers, including return address
-	SUBS PC, LR, #4		@ Return from interrupt (to wait loop)
-
-@------------------------------------@
-@ GOBCK - Restore from the interrupt @
-@------------------------------------@
-
-GOBCK:
-	LDMFD SP!, {R0-R5,LR}	@ Restore original registers, including return address
+	LDMFD SP!, {LR}		@ Restore original registers, including return address
 	SUBS PC, LR, #4		@ Return from interrupt (to wait loop)
 
 @--------------------@
