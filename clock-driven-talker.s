@@ -203,6 +203,7 @@ IRQ_DIRECTOR:
 @----------------------------------------------------------------@
 
 GPIO_SVC:
+	STMFD SP!, {R0-R1, LR}	@ Save registers on stack
 	LDR R0, =GEDR0	@ Load address of GEDR0 register
 	LDR R1, [R0]	@ Read GEDR0 register address to check if GPIO10 
 	TST R1, #BIT10	@ Check for UART interrupt on bit 10
@@ -256,13 +257,13 @@ RTC_SVC:
 	MOV R1, #ZERO   @ Reset the counter to zero
         STR R1, [R0]    @ Write word back to RCNR
 
-	LDR R0, =IER	        @ Pointer to interrupt enable register (IER)
-	MOV R1, #0x0A	        @ Bit 3 = modem status int, bit 1 = Tx enable
-	STRB R1, [R0]	        @ Write to IER
+	LDR R0, =IER	@ Pointer to interrupt enable register (IER)
+	MOV R1, #0x0A	@ Bit 3 = modem status int, bit 1 = Tx enable
+	STRB R1, [R0]	@ Write to IER
 
-	LDR R0, =MCR		@ Point to MCR to enable UART interrupt and assert #CTS
-	MOV R1, #0x0A		@ Enable UART interrupt
-	STRB R1, [R0]		@ Write back to MCR
+	LDR R0, =MCR	@ Point to MCR to enable UART interrupt and assert #CTS
+	MOV R1, #0x0A	@ Enable UART interrupt
+	STRB R1, [R0]	@ Write back to MCR
 
 	B GOBCK		@ Exit to wait for CTS# interrupt
 
@@ -271,10 +272,10 @@ RTC_SVC:
 @---------------------------------------------------------------------------------@
 
 TLKR_SVC:
-        LDR R0, =GEDR0          @ Point to GEDR0
-        LDR R1, [R0]            @ Read the current value from GEDR0
-        ORR R1, #BIT10          @ Set bit 10 to clear the interrupt from UART
-        STR R1, [R0]            @ Write to GEDR0
+        LDR R0, =GEDR0     @ Point to GEDR0
+        LDR R1, [R0]       @ Read the current value from GEDR0
+        ORR R1, #BIT10     @ Set bit 10 to clear the interrupt from UART
+        STR R1, [R0]       @ Write to GEDR0
 
 	LDR R0, =MSR	   @ Point to MSR
 	LDR R1, [R0]	   @ Read MSR, resets MSR change interrupt bits
@@ -309,11 +310,11 @@ NOCTS:
 @----------------------------------------------------------------@
 
 SEND:
-	STMFD SP!,{R2-R5}  @ Save additional registers
+	STMFD SP!,{R2-R5,LR}  @ Save additional registers
 
-	LDR R0, =IER	@ Load pointer to IER
-	MOV R1, #0x0A	@ Bit 3 = modem status interrupt, bit 1 = Tx int enable
-	LDR R1, [R0]	@ Write to IER
+	LDR R0, =IER		@ Load pointer to IER
+	MOV R1, #0x0A		@ Bit 3 = modem status interrupt, bit 1 = Tx int enable
+	LDR R1, [R0]		@ Write to IER
 
 	LDR R0, =CHAR_PTR	@ Load address of char pointer
 	LDR R1, [R0]		@ Load address of desired char in text string
@@ -338,7 +339,8 @@ SEND:
 	LDRB R1, [R0]		@ Read current value of MCR
 	BIC R1, #0x08		@ Clear bit 3 to disable UART interrupts
 	STRB R1, [R0]		@ Write resulting value with cleared bit 3 back to MCR
-	LDMFD SP!, {R2-R5}	@ Restore additional registers
+	LDMFD SP!, {R2-R5,LR}	@ Restore additional registers
+	SUBS PC, LR, #4
 
 @------------------------------------@
 @ GOBCK - Restore from the interrupt @
