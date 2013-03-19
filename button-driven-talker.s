@@ -258,7 +258,7 @@ NOCTS:
 @----------------------------------------------------------------@
 
 SEND:
-	STMFD SP!,{R2-R5}  @ Save additional registers
+	@STMFD SP!,{R2-R5,LR}  @ Save additional registers
 	LDR R0, =IER	@ Load pointer to IER
 	MOV R1, #0x0A	@ Bit 3 = modem status interrupt, bit 1 = Tx int enable
 	STRB R1, [R0]	@ Write to IER
@@ -286,6 +286,7 @@ SEND:
 	MOV R1, #0x00	        @ Bit 3 = modem status int, bit 1 = Tx enable
 	STRB R1, [R0]	        @ Write to IER
 	B GOBCK			@ 
+	NOP
 
 @------------------------------------@
 @ GOBCK - Restore from the interrupt @
@@ -293,7 +294,7 @@ SEND:
 
 GOBCK:
 	LDMFD SP!, {R0-R5,LR}	@ Restore original registers, including return address
-	SUBS PC, LR, #4		@ Return from interrupt (to wait loop)
+	SUBS PC, LR		@ Return from interrupt (to wait loop)
 
 @--------------------@
 @ Build literal pool @
