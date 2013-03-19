@@ -285,6 +285,11 @@ SEND:
 	MOV R1, #0x00	        @ Bit 3 = modem status int, bit 1 = Tx enable
 	STRB R1, [R0]	        @ Write to IER
 
+LDR R0, =ICMR	@ Load pointer to address of ICMR register
+LDR R1, [R0]	@ Read current value of ICMR
+ORR R1, #BIT10	@ Set bit 10 to unmask IM10
+STR R0, [R1] 	@ Write word back to ICMR register
+
 	LDMFD SP!, {R0-R5,LR}	@ Restore original registers, including return address
 	MOV PC, LR		@ Return from interrupt (to wait loop)
 
