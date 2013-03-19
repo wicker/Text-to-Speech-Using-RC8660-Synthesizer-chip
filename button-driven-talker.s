@@ -154,8 +154,6 @@ MRS R3, CPSR	@ Copy CPSR to R3
 BIC R3, #BIT7	@ Clear bit 7 (IRQ Enable bit)
 MSR CPSR_c, R3	@ Write new counter value back in memory
 		@ _c means modify the lower eight bits only
-
-@ ============================================================================ @
 @ RUNTIME PHASE								       @
 @ ============================================================================ @
 
@@ -174,6 +172,7 @@ IRQ_DIRECTOR:
 	STMFD SP!, {R0-R5, LR}	@ Save registers on stack
 	LDR R0, =ICIP	@ Point at IRQ Pending Register (ICIP)
 	LDR R1, [R0]	@ Read ICIP
+
 	TST R1, #BIT10	@ Check if GPIO 119:2 IRQ interrupt on IP<10> asserted
 	BEQ PASSON	@ No, must be other IRQ, pass on to system program
 
@@ -281,8 +280,14 @@ SEND:
 	MOV R3, #MESSAGE_LEN	@ Load the original number of characters in string again
 	STR R3, [R2]		@ Write that length to CHAR_COUNT
 
+	LDR R0, =MCR		@ Pointer to modem control register (MCR)
+	LDRB R1, [R0]		@ Read the MCR 
+	BIC R1, #0x08		@ Clear bit 3
+	STRB R1, [R0]		@ Write back
+
 	LDR R0, =IER	        @ Pointer to interrupt enable register (IER)
-	MOV R1, #0x00	        @ Bit 3 = modem status int, bit 1 = Tx enable
+	LDRB R1, [R0]		@ Read the IER
+	BIC R1, #0x0A		@ Bit 3 = modem status int, bit 1 = Tx enable 
 	STRB R1, [R0]	        @ Write to IER
 
 	LDMFD SP!, {R0-R5,LR}	@ Restore original registers, including return address
