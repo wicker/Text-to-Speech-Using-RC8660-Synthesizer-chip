@@ -192,20 +192,27 @@ IRQ_DIRECTOR:
 	STMFD SP!, {R0-R1, LR}	@ Save registers on stack
 	LDR R0, =ICIP	@ Point at IRQ Pending Register (ICIP)
 	LDR R1, [R0]	@ Read ICIP
+
 	TST R1, #BIT31  @ Check for the RTC interrupt on IP<31>
 	BNE RTC_SVC	@ Yes, go service the RTC interrupt
+
 	TST R1, #BIT10	@ Check if GPIO 119:2 IRQ interrupt on IP<10> asserted
         BNE GPIO_SVC    @ Yes, go service the button.
 	B PASSON	@ No, must be other system or GPIO IRQ, pass on
+
+	LDMFD SP!, {R0-R1,LR}	@ Restore original registers, including return address
+	SUBS PC, LR, #4		@ Return from interrupt (to wait loop)
 
 @----------------------------------------------------------------@
 @ GPIO_SVC - The GPIO interrupt is either the button or the UART @
 @----------------------------------------------------------------@
 
 GPIO_SVC:
-	STMFD SP!, {R0-R1, LR}	@ Save registers on stack
+	STMFD SP!, {LR}	@ Save registers on stack
+
 	LDR R0, =GEDR0	@ Load address of GEDR0 register
 	LDR R1, [R0]	@ Read GEDR0 register address to check if GPIO10 
+
 	TST R1, #BIT10	@ Check for UART interrupt on bit 10
 	BNE TLKR_SVC	@ Yes, go send character
 
@@ -214,6 +221,9 @@ GPIO_SVC:
 	TST R1, #BIT9	@ Check for button interupt on bit 9
 	BNE BTN_SVC	@ Yes, must be button press, go service the button
 			@ No, must be other GPIO 119:2 IRQ, pass on: 
+
+	LDMFD SP!, {LR}	@ Restore original registers, including return address
+	SUBS PC, LR, #4	@ Return from interrupt (to wait loop)
 
 @-----------------------------------------------------------@
 @ PASSON - The interrupt is not from our button or the UART @
@@ -228,6 +238,8 @@ PASSON:
 @-------------------------------------------------------------@
 
 BTN_SVC:
+	STMFD SP!, {LR}	@ Save registers on stack
+
 	LDR R0, =GEDR2	@ Point to GEDR2 
 	LDR R1, [R0]	@ Read the current value from GEDR2
 	ORR R1, #BIT9	@ Set bit 9 to clear the interrupt from pin 73
@@ -241,13 +253,15 @@ BTN_SVC:
 	MOV R1, #ZERO   @ Reset the counter to zero
         STR R1, [R0]    @ Write word back to RCNR
 
-	B GOBCK		@ Exit to wait for RTC alarm interrupt
+	LDMFD SP!, {LR}	@ Restore original registers, including return address
+	SUBS PC, LR, #4	@ Return to wait for the RTC alarm interrupt
 
 @-------------------------------------------------------------------------@
 @ RTC_SVC - The interrupt came from the RTC alarm signaling sixty seconds @
 @-------------------------------------------------------------------------@
 
 RTC_SVC:
+	STMFD SP!, {LR}	@ Save registers on stack
 
         LDR R0, =RTSR   @ Point to RTC status register
 	MOV R1, #BIT0   @ Set bit 0 to one to clear the alarm
@@ -265,13 +279,16 @@ RTC_SVC:
 	MOV R1, #0x0A	@ Enable UART interrupt
 	STRB R1, [R0]	@ Write back to MCR
 
-	B GOBCK		@ Exit to wait for CTS# interrupt
+	LDMFD SP!, {LR}	@ Restore original registers, including return address
+	SUBS PC, LR, #4	@ Return to wait for CTS# interrupt
 
 @---------------------------------------------------------------------------------@
 @ TLKR_SVC - The interrupt came from the CTS# low or THR empty or other interrupt @
 @---------------------------------------------------------------------------------@
 
 TLKR_SVC:
+	STMFD SP!, {LR}	@ Save registers on stack
+
         LDR R0, =GEDR0     @ Point to GEDR0
         LDR R1, [R0]       @ Read the current value from GEDR0
         ORR R1, #BIT10     @ Set bit 10 to clear the interrupt from UART
@@ -285,14 +302,18 @@ TLKR_SVC:
 	LDR R0, =LSR	   @ Point to LSR
 	LDR R1, [R0]	   @ Read LSR
         TST R1, #0x40	   @ Check if THR-ready is asserted
-	BEQ GOBCK	   @ If no, exit and wait for THR-ready
-	B SEND		   @ If yes, both are asserted, send character
+	BNE SEND	   @ If yes, both are asserted, send character
+
+	LDMFD SP!, {LR}	@ Restore original registers, including return address
+	SUBS PC, LR, #4	@ Return to wait for the THR-ready interrupt
 
 @--------------------------------------------------@
 @ NOCTS - The interrupt did not come from CTS# low @
 @--------------------------------------------------@
 
 NOCTS:
+	STMFD SP!, {LR}	@ Save registers on stack
+
 	LDR R0, =LSR	@ Point to LSR
 	LDR R1, [R0]	@ Read LSR (does not clear interrupt)
 	TST R1, #0x20	@ Check if THR-ready is asserted
@@ -303,7 +324,9 @@ NOCTS:
 	LDR R0, =IER	@ Load IER
 	MOV R1, #0x08	@ Disable bit 1 = Tx interrupt enable (Mask THR)
 	STR R1, [R0]	@ Write to IER
-	B GOBCK		@ Exit to wait for CTS# interrupt
+
+	LDMFD SP!, {LR}	@ Restore original registers, including return address
+	SUBS PC, LR, #4	@ Return to wait for CTS# interrupt
 		
 @----------------------------------------------------------------@
 @ SEND - unmask THR, send the character, test if more characters @
@@ -339,16 +362,9 @@ SEND:
 	LDRB R1, [R0]		@ Read current value of MCR
 	BIC R1, #0x08		@ Clear bit 3 to disable UART interrupts
 	STRB R1, [R0]		@ Write resulting value with cleared bit 3 back to MCR
+
 	LDMFD SP!, {R2-R5,LR}	@ Restore additional registers
-	SUBS PC, LR, #4
-
-@------------------------------------@
-@ GOBCK - Restore from the interrupt @
-@------------------------------------@
-
-GOBCK:
-	LDMFD SP!, {R0-R1,LR}	@ Restore original registers, including return address
-	SUBS PC, LR, #4		@ Return from interrupt (to wait loop)
+	SUBS PC, LR, #4		@ Return to wait for the next RTC interrupt
 
 @--------------------@
 @ Build literal pool @
@@ -362,16 +378,23 @@ BTLDR_IRQ_ADDRESS: .word 0
 
 .data
 
-MESSAGE: 
-	.word 0x0D
-	.ascii "Take me to your leader"
-	.word 0x0D
+.EQU MESSAGE_LEN, 7
 
-MESSAGE_LEN:
-	.word 24
+.align 4
 
-CHAR_PTR: 
-	.word MESSAGE
+MESSAGE:
+        .byte 0x0D      @ So the RC8660 will begin to speak
+        .ascii "Hello"
+        .byte 0x0D      @ So the RC8660 will begin to speak
 
-CHAR_COUNT: 
-	.word 24
+.align 4
+
+CHAR_COUNT:
+        .word 7
+
+.align 4
+
+CHAR_PTR:
+        .word MESSAGE
+
+.end

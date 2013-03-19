@@ -315,6 +315,8 @@ BTLDR_IRQ_ADDRESS: .word 0
 
 .data
 
+.EQU MESSAGE_LEN, 7
+
 .align 4
 
 MESSAGE: 
@@ -326,11 +328,6 @@ MESSAGE:
 
 CHAR_COUNT: 
 	.word 7
-
-.align 4
-
-.EQU MESSAGE_LEN, 7
-
 
 .align 4
 
