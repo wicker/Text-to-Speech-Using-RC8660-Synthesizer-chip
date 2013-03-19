@@ -187,6 +187,8 @@ IRQ_DIRECTOR:
 	TST R1, #BIT10	@ Check for UART interrupt on bit 10
 	BNE TLKR_SVC	@ Yes, go send character
 
+	LDMFD SP!, {R0-R5, LR}	@ Restore original registers, including return address
+	SUBS PC, LR, #4		@ Return from interrupt (to wait loop)
 
 @-----------------------------------------------------------@
 @ PASSON - The interrupt is not from our button or the UART @
@@ -214,7 +216,7 @@ BTN_SVC:
 	STRB R1, [R0]	        @ Write to IER
 
 	LDMFD SP!, {LR}		@ Restore registers, including return address
-	SUBS PC, LR, #4		@ Return from interrupt to wait loop
+	SUBS PC, LR, #4		@ Return from BTN_SVC to caller routine
 
 @---------------------------------------------------------------------------------@
 @ TLKR_SVC - The interrupt came from the CTS# low or THR empty or other interrupt @
@@ -239,7 +241,7 @@ TLKR_SVC:
 	BNE SEND	@ If yes, both are asserted, send character
 
 	LDMFD SP!, {LR}		@ Restore registers, including return address
-	SUBS PC, LR, #4		@ Return from interrupt to wait loop
+	SUBS PC, LR, #4		@ Return from TLKR_SVC to caller routine
 
 @--------------------------------------------------@
 @ NOCTS - The interrupt did not come from CTS# low @
@@ -260,7 +262,7 @@ NOCTS:
 	STRB R1, [R0]	@ Write to IER
 
 	LDMFD SP!, {LR}		@ Restore registers, including return address
-	SUBS PC, LR, #4		@ Return from interrupt to wait loop
+	SUBS PC, LR, #4		@ Return from NOCTS to caller routine
 		
 @----------------------------------------------------------------@
 @ SEND - unmask THR, send the character, test if more characters @
@@ -303,7 +305,7 @@ SEND:
 	STRB R1, [R0]	        @ Write to IER
 
 	LDMFD SP!, {LR}		@ Restore original registers, including return address
-	SUBS PC, LR, #4		@ Return from interrupt (to wait loop)
+	SUBS PC, LR, #4		@ Return from SEND to caller routine
 
 @--------------------@
 @ Build literal pool @
