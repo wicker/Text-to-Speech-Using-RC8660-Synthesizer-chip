@@ -294,7 +294,7 @@ SEND:
 
 GOBCK:
 	LDMFD SP!, {R0-R5,LR}	@ Restore original registers, including return address
-	SUBS PC, LR		@ Return from interrupt (to wait loop)
+	MOV PC, LR		@ Return from interrupt (to wait loop)
 
 @--------------------@
 @ Build literal pool @
