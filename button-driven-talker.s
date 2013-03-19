@@ -286,7 +286,7 @@ SEND:
 	STRB R1, [R0]	        @ Write to IER
 
 	LDMFD SP!, {R0-R5,LR}	@ Restore original registers, including return address
-	MOV PC, LR		@ Return from interrupt (to wait loop)
+	SUBS PC, LR, #4		@ Return from interrupt (to wait loop)
 
 @------------------------------------@
 @ GOBCK - Restore from the interrupt @
