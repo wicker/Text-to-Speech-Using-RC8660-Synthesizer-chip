@@ -309,7 +309,7 @@ NOCTS:
 SEND:
 	LDR R0, =IER	@ Load pointer to IER
 	MOV R1, #0x0A	@ Bit 3 = modem status interrupt, bit 1 = Tx int enable
-	LDR R1, [R0]	@ Write to IER
+	STR R1, [R0]	@ Write to IER
 
 	LDR R0, =CHAR_PTR	@ Load address of char pointer
 	LDR R1, [R0]		@ Load address of desired char in text string
