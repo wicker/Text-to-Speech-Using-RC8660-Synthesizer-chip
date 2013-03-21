@@ -121,7 +121,7 @@ STRB R1, [R0]	@ Write byte back to LCR
 @@ Clear FIFO and turn off FIFO mode
 LDR R0, =FCR	@ Pointer to FIFO Control Register (FCR)
 MOV R1, #0x00	@ Value to disable FIFO and clear FIFO
-LDR R1, [R0]	@ Write word back to FCR
+STRB R1, [R0]	@ Write word back to FCR
 
 @-----------------------------------------------------------------@
 @ Hook IRQ procedure address and install our IRQ_DIRECTOR address @
@@ -154,6 +154,8 @@ MRS R3, CPSR	@ Copy CPSR to R3
 BIC R3, #BIT7	@ Clear bit 7 (IRQ Enable bit)
 MSR CPSR_c, R3	@ Write new counter value back in memory
 		@ _c means modify the lower eight bits only
+
+@ ============================================================================ @
 @ RUNTIME PHASE								       @
 @ ============================================================================ @
 
@@ -172,7 +174,6 @@ IRQ_DIRECTOR:
 	STMFD SP!, {R0-R5, LR}	@ Save registers on stack
 	LDR R0, =ICIP	@ Point at IRQ Pending Register (ICIP)
 	LDR R1, [R0]	@ Read ICIP
-
 	TST R1, #BIT10	@ Check if GPIO 119:2 IRQ interrupt on IP<10> asserted
 	BEQ PASSON	@ No, must be other IRQ, pass on to system program
 
@@ -187,8 +188,6 @@ IRQ_DIRECTOR:
 	TST R1, #BIT10	@ Check for UART interrupt on bit 10
 	BNE TLKR_SVC	@ Yes, go send character
 
-	LDMFD SP!, {R0-R5, LR}	@ Restore original registers, including return address
-	SUBS PC, LR, #4		@ Return from interrupt (to wait loop)
 
 @-----------------------------------------------------------@
 @ PASSON - The interrupt is not from our button or the UART @
@@ -203,8 +202,6 @@ PASSON:
 @-------------------------------------------------------------@
 
 BTN_SVC:
-	STMFD SP!, {LR} 	@ Save LR on stack
-
 	LDR R0, =GEDR2		@ Point to GEDR2 
 	LDR R1, [R0]		@ Read the current value from GEDR2
 	ORR R1, #BIT9		@ Set bit 9 to clear the interrupt from pin 73
@@ -215,16 +212,14 @@ BTN_SVC:
 	MOV R1, #0x0A	        @ Bit 3 = modem status int, bit 1 = Tx enable
 	STRB R1, [R0]	        @ Write to IER
 
-	LDMFD SP!, {LR}		@ Restore registers, including return address
-	SUBS PC, LR, #4		@ Return from BTN_SVC to caller routine
+	LDMFD SP!, {R0-R5,LR}	@ Restore registers, including return address
+	SUBS PC, LR, #4		@ Return from interrupt to wait loop
 
 @---------------------------------------------------------------------------------@
 @ TLKR_SVC - The interrupt came from the CTS# low or THR empty or other interrupt @
 @---------------------------------------------------------------------------------@
 
 TLKR_SVC:
-	STMFD SP!, {LR}	@ Save LR on stack
-
 	LDR R0, =GEDR0	@ Point to GEDR0
 	LDR R1, [R0]	@ Read the current value from GEDR0
 	ORR R1, #BIT10	@ Set bit 10 to clear the interrupt from UART
@@ -239,17 +234,13 @@ TLKR_SVC:
 	LDRB R1, [R0]	@ Read LSR
         TST R1, #BIT5	@ Check if THR-ready is asserted
 	BNE SEND	@ If yes, both are asserted, send character
-
-	LDMFD SP!, {LR}		@ Restore registers, including return address
-	SUBS PC, LR, #4		@ Return from TLKR_SVC to caller routine
+	B GOBCK		@ If no, exit and wait for THR-ready
 
 @--------------------------------------------------@
 @ NOCTS - The interrupt did not come from CTS# low @
 @--------------------------------------------------@
 
 NOCTS:
-	STMFD SP!, {LR}	@ Save LR on stack
-
 	LDR R0, =LSR	@ Point to LSR
 	LDRB R1, [R0]	@ Read LSR (does not clear interrupt)
 	TST R1, #0x20	@ Check if THR-ready is asserted
@@ -260,17 +251,13 @@ NOCTS:
 	LDR R0, =IER	@ Load IER
 	MOV R1, #0x08	@ Disable bit 1 = Tx interrupt enable (Mask THR)
 	STRB R1, [R0]	@ Write to IER
-
-	LDMFD SP!, {LR}		@ Restore registers, including return address
-	SUBS PC, LR, #4		@ Return from NOCTS to caller routine
+	B GOBCK		@ Exit to wait for CTS# interrupt
 		
 @----------------------------------------------------------------@
 @ SEND - unmask THR, send the character, test if more characters @
 @----------------------------------------------------------------@
 
 SEND:
-	STMFD SP!, {LR}	@ Save LR on stack
-	
 	LDR R0, =IER	@ Load pointer to IER
 	MOV R1, #0x0A	@ Bit 3 = modem status interrupt, bit 1 = Tx int enable
 	STRB R1, [R0]	@ Write to IER
@@ -294,18 +281,17 @@ SEND:
 	MOV R3, #MESSAGE_LEN	@ Load the original number of characters in string again
 	STR R3, [R2]		@ Write that length to CHAR_COUNT
 
-	LDR R0, =MCR		@ Pointer to modem control register (MCR)
-	LDRB R1, [R0]		@ Read the MCR 
-	BIC R1, #0x08		@ Clear bit 3
-	STRB R1, [R0]		@ Write back
-
 	LDR R0, =IER	        @ Pointer to interrupt enable register (IER)
-	LDRB R1, [R0]		@ Read the IER
-	BIC R1, #0x0A		@ Bit 3 = modem status int, bit 1 = Tx enable 
+	MOV R1, #0x00	        @ Bit 3 = modem status int, bit 1 = Tx enable
 	STRB R1, [R0]	        @ Write to IER
 
-	LDMFD SP!, {LR}		@ Restore original registers, including return address
-	SUBS PC, LR, #4		@ Return from SEND to caller routine
+@------------------------------------@
+@ GOBCK - Restore from the interrupt @
+@------------------------------------@
+
+GOBCK:
+	LDMFD SP!, {R0-R5,LR}	@ Restore original registers, including return address
+	SUBS PC, LR, #4		@ Return from interrupt (to wait loop)
 
 @--------------------@
 @ Build literal pool @
@@ -314,8 +300,6 @@ SEND:
 BTLDR_IRQ_ADDRESS: .word 0
 
 .data
-
-.EQU MESSAGE_LEN, 7
 
 .align 4
 
@@ -331,6 +315,11 @@ CHAR_COUNT:
 
 .align 4
 
+.EQU MESSAGE_LEN, 7
+
+
+.align 4
+
 CHAR_PTR:
 	.word MESSAGE
 
@@ -339,6 +328,7 @@ CHAR_PTR:
 @ ============================================================================== @
 
 .end
+
 
 
 
