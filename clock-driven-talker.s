@@ -277,7 +277,7 @@ TLKR_SVC:
 	BEQ NOCTS	   @ If not, go check for THR status
 
 	LDR R0, =LSR	   @ Point to LSR
-	LDR R1, [R0]	   @ Read LSR
+	LDRB R1, [R0]	   @ Read LSR
         TST R1, #0x20	   @ Check if THR-ready is asserted
 
 	BNE SEND	   @ If yes, both are asserted, send character
@@ -291,7 +291,7 @@ TLKR_SVC:
 
 NOCTS:
 	LDR R0, =LSR	@ Point to LSR
-	LDR R1, [R0]	@ Read LSR (does not clear interrupt)
+	LDRB R1, [R0]	@ Read LSR (does not clear interrupt)
 	TST R1, #0x20	@ Check if THR-ready is asserted
 	BEQ GOBCK	@ Neither CTS# or THR are asserted, must be other source
 			@ Else no CTS# but THR asserted, disable interrupt on THR
