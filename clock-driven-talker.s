@@ -233,7 +233,8 @@ BTN_SVC:
 	MOV R1, #ZERO   @ Reset the counter to zero
         STR R1, [R0]    @ Write word back to RCNR
 
-	B GOBCK		@ Exit to wait for RTC alarm interrupt
+	LDMFD SP!, {R0-R5,LR}	@ Restore original registers, including return address
+	SUBS PC, LR, #4		@ Return from interrupt (to wait loop)
 
 @-------------------------------------------------------------------------@
 @ RTC_SVC - The interrupt came from the RTC alarm signaling sixty seconds @
@@ -257,17 +258,18 @@ RTC_SVC:
 @	MOV R1, #0x0A		@ Enable UART interrupt
 @	STRB R1, [R0]		@ Write back to MCR
 
-	B GOBCK		@ Exit to wait for CTS# interrupt
+	LDMFD SP!, {R0-R5,LR}	@ Restore original registers, including return address
+	SUBS PC, LR, #4		@ Return from interrupt (to wait loop)
 
 @---------------------------------------------------------------------------------@
 @ TLKR_SVC - The interrupt came from the CTS# low or THR empty or other interrupt @
 @---------------------------------------------------------------------------------@
 
 TLKR_SVC:
-        LDR R0, =GEDR0          @ Point to GEDR0
-        LDR R1, [R0]            @ Read the current value from GEDR0
-        ORR R1, #BIT10          @ Set bit 10 to clear the interrupt from UART
-        STR R1, [R0]            @ Write to GEDR0
+        LDR R0, =GEDR0     @ Point to GEDR0
+        LDR R1, [R0]       @ Read the current value from GEDR0
+        ORR R1, #BIT10     @ Set bit 10 to clear the interrupt from UART
+        STR R1, [R0]       @ Write to GEDR0
 
 	LDR R0, =MSR	   @ Point to MSR
 	LDR R1, [R0]	   @ Read MSR, resets MSR change interrupt bits
@@ -277,8 +279,11 @@ TLKR_SVC:
 	LDR R0, =LSR	   @ Point to LSR
 	LDR R1, [R0]	   @ Read LSR
         TST R1, #0x20	   @ Check if THR-ready is asserted
-	BEQ GOBCK	   @ If no, exit and wait for THR-ready
-	B SEND		   @ If yes, both are asserted, send character
+
+	BNE SEND	   @ If yes, both are asserted, send character
+
+	LDMFD SP!, {R0-R5,LR}	@ Restore original registers, including return address
+	SUBS PC, LR, #4		@ Return from interrupt (to wait loop)
 
 @--------------------------------------------------@
 @ NOCTS - The interrupt did not come from CTS# low @
@@ -328,6 +333,9 @@ SEND:
         LDR R0, =IER            @ Pointer to interrupt enable register (IER)
         MOV R1, #0x00           @ Bit 3 = modem status int, bit 1 = Tx enable
         STRB R1, [R0]           @ Write to IER
+
+	LDMFD SP!, {R0-R5,LR}	@ Restore original registers, including return address
+	SUBS PC, LR, #4		@ Return from interrupt (to wait loop)
 
 @------------------------------------@
 @ GOBCK - Restore from the interrupt @
