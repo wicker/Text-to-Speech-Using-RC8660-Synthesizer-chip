@@ -254,9 +254,9 @@ RTC_SVC:
 	MOV R1, #0x0A	        @ Bit 3 = modem status int, bit 1 = Tx enable
 	STRB R1, [R0]	        @ Write to IER
 
-@	LDR R0, =MCR		@ Point to MCR to enable UART interrupt and assert #CTS
-@	MOV R1, #0x0A		@ Enable UART interrupt
-@	STRB R1, [R0]		@ Write back to MCR
+	LDR R0, =MCR		@ Point to MCR to enable UART interrupt and assert #CTS
+	MOV R1, #0x0A		@ Enable UART interrupt
+	STRB R1, [R0]		@ Write back to MCR
 
 	LDMFD SP!, {R0-R5,LR}	@ Restore original registers, including return address
 	SUBS PC, LR, #4		@ Return from interrupt (to wait loop)
@@ -372,7 +372,6 @@ CHAR_COUNT:
 .align 4
 
 .EQU MESSAGE_LEN, 7
-
 
 .align 4
 
