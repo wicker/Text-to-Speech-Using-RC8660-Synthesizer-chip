@@ -46,7 +46,6 @@ _start:
 .EQU ICCR,   0x40D00014  @ Interrupt Controller Control Register
 .EQU ICLR,   0x40D00008  @ Interrupt Controller Level Register
 
-@@@@@@@@@@@FIX ME
 .EQU RHR,     0x10800000  @ Receive Holding Register
 .EQU THR,     0x10800000  @ Transmit Holding Register
 .EQU DLSB,    0x10800000  @ Divisor LSB 
@@ -62,8 +61,8 @@ _start:
 
 .EQU OSCC,    0x41300008  @ Oscillation Configuration Register
 .EQU RTSR,    0x40900008  @ RTC Status Register
-.EQU RTAR,   0x40900004  @ RTC Alarm Register
-.EQU RCNR,   0x40900000  @ RTC Counter Register
+.EQU RTAR,    0x40900004  @ RTC Alarm Register
+.EQU RCNR,    0x40900000  @ RTC Counter Register
 
 @-------------------------------------------------------@
 @ Initialize GPIO 73 as an input and rising edge detect @
@@ -124,7 +123,7 @@ STRB R1, [R0]	@ Write byte back to LCR
 @@ Clear FIFO and turn off FIFO mode
 LDR R0, =FCR	@ Pointer to FIFO Control Register (FCR)
 MOV R1, #0x00	@ Value to disable FIFO and clear FIFO
-STR R1, [R0]	@ Write word back to FCR
+STRB R1, [R0]	@ Write word back to FCR
 
 @-----------------------------------------------------------------@
 @ Hook IRQ procedure address and install our IRQ_DIRECTOR address @
@@ -189,20 +188,15 @@ LOOP: 	NOP
 @-----------------------------------------------------------------------------@
 
 IRQ_DIRECTOR:
-	STMFD SP!, {R0-R1, LR}	@ Save registers on stack
+	STMFD SP!, {R0-R5, LR}	@ Save registers on stack
 	LDR R0, =ICIP	@ Point at IRQ Pending Register (ICIP)
 	LDR R1, [R0]	@ Read ICIP
 	TST R1, #BIT31  @ Check for the RTC interrupt on IP<31>
 	BNE RTC_SVC	@ Yes, go service the RTC interrupt
+
 	TST R1, #BIT10	@ Check if GPIO 119:2 IRQ interrupt on IP<10> asserted
-        BNE GPIO_SVC    @ Yes, go service the button.
-	B PASSON	@ No, must be other system or GPIO IRQ, pass on
+        BEQ PASSON	@ No, must be other system or GPIO IRQ, pass on
 
-@----------------------------------------------------------------@
-@ GPIO_SVC - The GPIO interrupt is either the button or the UART @
-@----------------------------------------------------------------@
-
-GPIO_SVC:
 	LDR R0, =GEDR0	@ Load address of GEDR0 register
 	LDR R1, [R0]	@ Read GEDR0 register address to check if GPIO10 
 	TST R1, #BIT10	@ Check for UART interrupt on bit 10
@@ -212,7 +206,6 @@ GPIO_SVC:
 	LDR R1, [R0]	@ Read GEDR2 register value
 	TST R1, #BIT9	@ Check for button interupt on bit 9
 	BNE BTN_SVC	@ Yes, must be button press, go service the button
-			@ No, must be other GPIO 119:2 IRQ, pass on: 
 
 @-----------------------------------------------------------@
 @ PASSON - The interrupt is not from our button or the UART @
@@ -260,9 +253,9 @@ RTC_SVC:
 	MOV R1, #0x0A	        @ Bit 3 = modem status int, bit 1 = Tx enable
 	STRB R1, [R0]	        @ Write to IER
 
-	LDR R0, =MCR		@ Point to MCR to enable UART interrupt and assert #CTS
-	MOV R1, #0x0A		@ Enable UART interrupt
-	STRB R1, [R0]		@ Write back to MCR
+@	LDR R0, =MCR		@ Point to MCR to enable UART interrupt and assert #CTS
+@	MOV R1, #0x0A		@ Enable UART interrupt
+@	STRB R1, [R0]		@ Write back to MCR
 
 	B GOBCK		@ Exit to wait for CTS# interrupt
 
@@ -283,7 +276,7 @@ TLKR_SVC:
 
 	LDR R0, =LSR	   @ Point to LSR
 	LDR R1, [R0]	   @ Read LSR
-        TST R1, #0x40	   @ Check if THR-ready is asserted
+        TST R1, #0x20	   @ Check if THR-ready is asserted
 	BEQ GOBCK	   @ If no, exit and wait for THR-ready
 	B SEND		   @ If yes, both are asserted, send character
 
@@ -301,7 +294,7 @@ NOCTS:
 
 	LDR R0, =IER	@ Load IER
 	MOV R1, #0x08	@ Disable bit 1 = Tx interrupt enable (Mask THR)
-	STR R1, [R0]	@ Write to IER
+	STRB R1, [R0]	@ Write to IER
 	B GOBCK		@ Exit to wait for CTS# interrupt
 		
 @----------------------------------------------------------------@
@@ -309,8 +302,6 @@ NOCTS:
 @----------------------------------------------------------------@
 
 SEND:
-	STMFD SP!,{R2-R5}  @ Save additional registers
-
 	LDR R0, =IER	@ Load pointer to IER
 	MOV R1, #0x0A	@ Bit 3 = modem status interrupt, bit 1 = Tx int enable
 	LDR R1, [R0]	@ Write to IER
@@ -327,25 +318,23 @@ SEND:
 	SUBS R3, R3, #1		@ Decrement char counter by 1
 	STR R3, [R2]		@ Store char value counter back in memory
 	TST R2, #0x00		@ Test char counter value
-	BPL GOBCK		@ If greater than zero, go get more characters
+	BNE GOBCK		@ If greater than zero, go get more characters
 
 	LDR R3, =MESSAGE	@ If not, reload the message. Get address of start string.
 	STR R3, [R0]		@ Store the string starting address in CHAR_PTR
 	MOV R3, #MESSAGE_LEN	@ Load the original number of characters in string again
 	STR R3, [R2]		@ Write that length to CHAR_COUNT
 
-	LDR R0, =MCR		@ Load address of MCR
-	LDRB R1, [R0]		@ Read current value of MCR
-	BIC R1, #0x08		@ Clear bit 3 to disable UART interrupts
-	STRB R1, [R0]		@ Write resulting value with cleared bit 3 back to MCR
-	LDMFD SP!, {R2-R5}	@ Restore additional registers
+        LDR R0, =IER            @ Pointer to interrupt enable register (IER)
+        MOV R1, #0x00           @ Bit 3 = modem status int, bit 1 = Tx enable
+        STRB R1, [R0]           @ Write to IER
 
 @------------------------------------@
 @ GOBCK - Restore from the interrupt @
 @------------------------------------@
 
 GOBCK:
-	LDMFD SP!, {R0-R1,LR}	@ Restore original registers, including return address
+	LDMFD SP!, {R0-R5,LR}	@ Restore original registers, including return address
 	SUBS PC, LR, #4		@ Return from interrupt (to wait loop)
 
 @--------------------@
@@ -360,17 +349,26 @@ BTLDR_IRQ_ADDRESS: .word 0
 
 .data
 
-MESSAGE: 
-	.word 0x0D
-	.ascii "Take me to your leader"
-	.word 0x0D
+.align 4
 
-MESSAGE_LEN:
-	.word 24
+MESSAGE:
+        .byte 0x0D      @ So the RC8660 will begin to speak
+        .ascii "Hello"
+        .byte 0x0D      @ So the RC8660 will begin to speak
 
-CHAR_PTR: 
-	.word MESSAGE
+.align 4
 
-CHAR_COUNT: 
-	.word 24
+CHAR_COUNT:
+        .word 7
 
+.align 4
+
+.EQU MESSAGE_LEN, 7
+
+
+.align 4
+
+CHAR_PTR:
+        .word MESSAGE
+
+.end
