@@ -124,7 +124,7 @@ STRB R1, [R0]	@ Write byte back to LCR
 @@ Clear FIFO and turn off FIFO mode
 LDR R0, =FCR	@ Pointer to FIFO Control Register (FCR)
 MOV R1, #0x00	@ Value to disable FIFO and clear FIFO
-STRB R1, [R0]	@ Write word back to FCR
+STR R1, [R0]	@ Write word back to FCR
 
 @-----------------------------------------------------------------@
 @ Hook IRQ procedure address and install our IRQ_DIRECTOR address @
