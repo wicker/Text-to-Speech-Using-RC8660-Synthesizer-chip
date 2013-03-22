@@ -213,7 +213,8 @@ IRQ_DIRECTOR:
 
 PASSON: 
 	LDMFD SP!, {R0-R1,LR}		@ Restore the registers
-	LDR PC, =BTLDR_IRQ_ADDRESS	@ Go to bootloader IRQ service procedure
+	@LDR PC, =BTLDR_IRQ_ADDRESS	@ Go to bootloader IRQ service procedure
+	SUBS PC, LR, #4			@ Return to wait loop
 
 @-------------------------------------------------------------@
 @ BTN_SVC - The interrupt came from our button on GPIO pin 73 @
@@ -331,7 +332,7 @@ SEND:
 	STR R3, [R2]		@ Write that length to CHAR_COUNT
 
         LDR R0, =IER            @ Pointer to interrupt enable register (IER)
-        MOV R1, #0x00           @ Bit 3 = modem status int, bit 1 = Tx enable
+        MOV R1, #0x00           @ Bit 3 = modem status int, bit 1 = Tx disable
         STRB R1, [R0]           @ Write to IER
 
 	LDMFD SP!, {R0-R5,LR}	@ Restore original registers, including return address
