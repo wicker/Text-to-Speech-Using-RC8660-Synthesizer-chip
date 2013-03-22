@@ -283,7 +283,7 @@ SEND:
 	STR R3, [R2]		@ Write that length to CHAR_COUNT
 
 	LDR R0, =IER	        @ Pointer to interrupt enable register (IER)
-	MOV R1, #0x08	        @ Bit 3 = modem status int, bit 1 = Tx enable
+	MOV R1, #0x00	        @ Bit 3 = modem status int, bit 1 = Tx enable
 	STRB R1, [R0]	        @ Write to IER
 
 @------------------------------------@
