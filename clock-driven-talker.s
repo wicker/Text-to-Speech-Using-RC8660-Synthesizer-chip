@@ -149,7 +149,7 @@ STRB R1, [R0]   @ Write byte back to OSCC
 
 LDR R0, =RTAR   @ Pointer to RTC alarm register
 @MOV R1, #SIXTY  @ Write the hex value of decimal sixty to the alarm register
-MOV R1, #0x5  @ Write the hex value of decimal five to the alarm register
+MOV R1, #0x0A  @ Write the hex value of decimal five to the alarm register
 STRB R1, [R0]   @ Write byte back to RTAR
 
 @---------------------------------------------------------------------------------@
@@ -226,13 +226,13 @@ BTN_SVC:
 	ORR R1, #BIT9	@ Set bit 9 to clear the interrupt from pin 73
 	STR R1, [R0]	@ Write to GEDR2
 
-        LDR R0, =RTSR   @ Pointer to RTC status register
-	MOV R1, #BIT2   @ Set bit 2 to enable alarm interrupt
-	STRB R1, [R0]   @ Write byte back to RTSR
-
 	LDR R0, =RCNR   @ Pointer to the RTC counter register
 	MOV R1, #ZERO   @ Reset the counter to zero
         STR R1, [R0]    @ Write word back to RCNR
+
+        LDR R0, =RTSR   @ Pointer to RTC status register
+	MOV R1, #BIT2   @ Set bit 2 to enable alarm interrupt
+	STRB R1, [R0]   @ Write byte back to RTSR
 
 	LDMFD SP!, {R0-R5,LR}	@ Restore original registers, including return address
 	SUBS PC, LR, #4		@ Return from interrupt (to wait loop)
