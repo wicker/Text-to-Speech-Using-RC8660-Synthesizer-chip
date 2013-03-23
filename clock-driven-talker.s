@@ -149,8 +149,8 @@ STRB R1, [R0]   @ Write byte back to OSCC
 
 LDR R0, =RTAR   @ Pointer to RTC alarm register
 @MOV R1, #SIXTY  @ Write the hex value of decimal sixty to the alarm register
-MOV R1, #0x0A  @ Write the hex value of decimal five to the alarm register
-STRB R1, [R0]   @ Write byte back to RTAR
+MOV R1, #0x0A  @ Write the desired delay in seconds to the alarm register
+STR R1, [R0]   @ Write word back to RTAR
 
 @---------------------------------------------------------------------------------@
 @ Initialize interrupt controller for button and UART on IP<10> and RTC on IP<31> @
