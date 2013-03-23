@@ -315,15 +315,15 @@ SEND:
 	LDR R0, =CHAR_PTR	@ Load address of char pointer
 	LDR R1, [R0]		@ Load address of desired char in text string
 	LDR R2, =CHAR_COUNT	@ Load address of count store location
-	LDR R3, [R2]		@ Get current char count value
+	LDRB R3, [R2]		@ Get current char count value
 	LDRB R4, [R1], #1	@ Load char from string, increment char pointer
-	STR R1, [R0]		@ Put incremented char address into CHAR_PTR for next time
+	STRB R1, [R0]		@ Put incremented char address into CHAR_PTR for next time
 
 	LDR R5, =THR		@ Point at UART THR
-	STR R4, [R5]		@ Write char to THR, which clears interrupt source for now
+	STRB R4, [R5]		@ Write char to THR, which clears interrupt source for now
 	SUBS R3, R3, #1		@ Decrement char counter by 1
-	STR R3, [R2]		@ Store char value counter back in memory
-	TST R2, #0x00		@ Test char counter value
+	STRB R3, [R2]		@ Store char value counter back in memory
+	CMP R3, #0x00		@ Test char counter value
 	BNE GOBCK		@ If greater than zero, go get more characters
 
 	LDR R3, =MESSAGE	@ If not, reload the message. Get address of start string.
@@ -334,9 +334,6 @@ SEND:
         LDR R0, =IER            @ Pointer to interrupt enable register (IER)
         MOV R1, #0x00           @ Bit 3 = modem status int, bit 1 = Tx disable
         STRB R1, [R0]           @ Write to IER
-
-	LDMFD SP!, {R0-R5,LR}	@ Restore original registers, including return address
-	SUBS PC, LR, #4		@ Return from interrupt (to wait loop)
 
 @------------------------------------@
 @ GOBCK - Restore from the interrupt @
