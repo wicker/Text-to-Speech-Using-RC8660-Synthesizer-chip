@@ -243,13 +243,13 @@ BTN_SVC:
 
 RTC_SVC:
 
-        LDR R0, =RTSR   @ Point to RTC status register
-	MOV R1, #BIT0   @ Set bit 0 to one to clear the alarm
-	STR R1, [R0]    @ Write to RTSR
-
 	LDR R0, =RCNR   @ Pointer to the RTC counter register
 	MOV R1, #ZERO   @ Reset the counter to zero
         STR R1, [R0]    @ Write word back to RCNR
+
+        LDR R0, =RTSR   @ Point to RTC status register
+	MOV R1, #0x05   @ Set bit 0 to one to clear the alarm
+	STR R1, [R0]    @ Write to RTSR
 
 	LDR R0, =IER	        @ Pointer to interrupt enable register (IER)
 	MOV R1, #0x0A	        @ Bit 3 = modem status int, bit 1 = Tx enable
